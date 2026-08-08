@@ -261,11 +261,13 @@ export function SettingsView() {
                       <button
                         key={col}
                         onClick={() => setEditingCategory({ ...editingCategory, color: col })}
-                        className={`w-9 h-9 rounded-full border-[3px] transition-transform active:scale-90 ${
+                        className={`relative w-9 h-9 rounded-full border-[3px] transition-transform active:scale-90 overflow-hidden ${
                           editingCategory.color === col ? 'border-[#1c1c1e] dark:border-white scale-110' : 'border-transparent'
                         }`}
                         style={{ backgroundColor: col }}
-                      />
+                      >
+                        <span className="hidden dark:block absolute inset-0 rounded-full bg-black/20 pointer-events-none" />
+                      </button>
                     ))}
                   </div>
                 </div>

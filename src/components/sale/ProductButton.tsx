@@ -28,6 +28,10 @@ export function ProductButton({ product }: Props) {
           : `var(--cat-color, #007aff)`,
       }}
     >
+      {/* Dark mode color dampener — Apple-style reduced chroma in dark UI */}
+      {!product.isSoldOut && (
+        <span className="hidden dark:block absolute inset-0 rounded-2xl bg-black/20 pointer-events-none" />
+      )}
       {qty > 0 && (
         <span className="absolute top-2 right-2 bg-white text-[#1c1c1e] text-[11px] font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center leading-none shadow-sm">
           {qty}

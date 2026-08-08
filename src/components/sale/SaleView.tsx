@@ -73,13 +73,14 @@ export function SaleView() {
             <button
               key={cat.id}
               onClick={() => setActiveCatId(cat.id!)}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap shrink-0 transition-all active:opacity-70 ${
+              className={`relative px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap shrink-0 transition-all active:opacity-70 overflow-hidden ${
                 cat.id === currentCatId
                   ? 'text-white shadow-sm'
                   : 'bg-white/70 dark:bg-white/10 text-[#3c3c43] dark:text-white/80'
               }`}
               style={cat.id === currentCatId ? { backgroundColor: cat.color } : undefined}
             >
+              <span className="hidden dark:block absolute inset-0 bg-black/25 pointer-events-none" />
               {cat.name}
             </button>
           ))}
