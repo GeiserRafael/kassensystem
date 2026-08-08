@@ -15,7 +15,7 @@ export function UserNamePrompt({ onSave }: Props) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-svh bg-gray-50 dark:bg-gray-900 px-6">
+    <div className="flex flex-col items-center justify-center h-svh bg-gray-50 dark:bg-gray-900 px-6" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-8 shadow space-y-5">
         <div className="text-center">
           <div className="text-5xl mb-3">🛒</div>

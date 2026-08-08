@@ -72,7 +72,7 @@ export default function App() {
         <UserNamePrompt onSave={(name) => setUserName(name)} />
       )}
       {userName && (
-    <div className="flex flex-col h-svh max-w-lg mx-auto bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-svh max-w-lg mx-auto bg-white dark:bg-gray-900" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Sync-Status-Leiste */}
       <div className={`flex items-center justify-between px-3 py-1 text-xs shrink-0 ${
         online
