@@ -32,7 +32,7 @@ export default function App() {
     const onOffline = () => setOnline(false)
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
-    ensureSignedIn().then(() => doSync())
+    ensureSignedIn().then(() => doSync()).catch((e) => console.warn('Auth fehlgeschlagen:', e))
     return () => {
       window.removeEventListener('online', onOnline)
       window.removeEventListener('offline', onOffline)
