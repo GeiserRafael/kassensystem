@@ -4,6 +4,7 @@ import { db } from '../../db/db'
 import { useCartStore } from '../../store/cartStore'
 import { formatCent, generateId, getDeviceId, getUserName } from '../../utils'
 import { ProductButton } from './ProductButton'
+import { syncSalesToFirestore } from '../../db/sync'
 import type { Category } from '../../db/types'
 
 const QUICK_AMOUNTS = [5_00, 10_00, 20_00, 50_00]
@@ -57,6 +58,8 @@ export function SaleView() {
     setGiven('')
     setPaid(true)
     setTimeout(() => setPaid(false), 1500)
+    // Sofort zu Firestore hochladen wenn online
+    if (navigator.onLine) syncSalesToFirestore().catch(console.error)
   }
 
   return (
