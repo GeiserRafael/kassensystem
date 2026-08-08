@@ -83,6 +83,7 @@ export async function deleteCategoryFromFirestore(id: number): Promise<void> {
 }
 
 // --- Katalog vom Server ziehen (beim App-Start) ---
+// Firestore ist die einzige Wahrheit — lokal immer überschreiben
 
 export async function pullCatalogFromFirestore(): Promise<void> {
   if (!firestore) return
@@ -92,25 +93,14 @@ export async function pullCatalogFromFirestore(): Promise<void> {
     getDocs(collection(firestore, 'products')),
   ])
 
-  // Nur updaten wenn remote neuer als lokal (via lastModified)
-  for (const docSnap of catSnap.docs) {
-    const remote = docSnap.data() as Category
-    const local = await db.categories.get(remote.id!)
-    if (!local || remote.lastModified > local.lastModified) {
-      await db.categories.put(remote)
-    }
-  }
+  const cats = catSnap.docs.map((d) => d.data() as Category)
+  const prods = prodSnap.docs.map((d) => d.data() as Product)
 
-  for (const docSnap of prodSnap.docs) {
-    const remote = docSnap.data() as Product
-    const local = await db.products.get(remote.id!)
-    if (!local || remote.lastModified > local.lastModified) {
-      await db.products.put(remote)
-    }
-  }
+  if (cats.length > 0) await db.categories.bulkPut(cats)
+  if (prods.length > 0) await db.products.bulkPut(prods)
 }
 
-// --- Live-Listener: Änderungen von anderen Geräten sofort übernehmen ---
+// --- Live-Listener: Änderungen sofort übernehmen, Firestore gewinnt immer ---
 
 export function subscribeToProductChanges(): Unsubscribe {
   if (!firestore) return () => {}
@@ -121,10 +111,7 @@ export function subscribeToProductChanges(): Unsubscribe {
       if (change.type === 'removed') {
         await db.products.delete(remote.id!)
       } else {
-        const local = await db.products.get(remote.id!)
-        if (!local || remote.lastModified > local.lastModified) {
-          await db.products.put(remote)
-        }
+        await db.products.put(remote)
       }
     })
   })
@@ -135,10 +122,7 @@ export function subscribeToProductChanges(): Unsubscribe {
       if (change.type === 'removed') {
         await db.categories.delete(remote.id!)
       } else {
-        const local = await db.categories.get(remote.id!)
-        if (!local || remote.lastModified > local.lastModified) {
-          await db.categories.put(remote)
-        }
+        await db.categories.put(remote)
       }
     })
   })
