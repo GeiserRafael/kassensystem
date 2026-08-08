@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react'
 import { SaleView } from './components/sale/SaleView'
 import { SettingsView } from './components/settings/SettingsView'
 import { syncSalesToFirestore, getLastSyncedAt } from './db/sync'
-import { ensureSignedIn } from './firebase'
+import { ensureSignedIn, firebaseReady } from './firebase'
 import { useDarkMode } from './hooks/useDarkMode'
 
 type Tab = 'sale' | 'settings'
+type FirebaseStatus = 'unknown' | 'connected' | 'error'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('sale')
   const [online, setOnline] = useState(navigator.onLine)
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<string | null>(getLastSyncedAt())
+  const [fbStatus, setFbStatus] = useState<FirebaseStatus>('unknown')
   const { dark, toggle: toggleDark } = useDarkMode()
 
   async function doSync() {
@@ -19,9 +21,11 @@ export default function App() {
     setSyncing(true)
     try {
       const count = await syncSalesToFirestore()
+      setFbStatus('connected')
       if (count > 0) setLastSync(new Date().toISOString())
     } catch (e) {
       console.error('Sync fehlgeschlagen:', e)
+      setFbStatus('error')
     } finally {
       setSyncing(false)
     }
@@ -32,7 +36,9 @@ export default function App() {
     const onOffline = () => setOnline(false)
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
-    ensureSignedIn().then(() => doSync()).catch((e) => console.warn('Auth fehlgeschlagen:', e))
+    ensureSignedIn()
+      .then(() => { setFbStatus('connected'); doSync() })
+      .catch((e) => { console.warn('Auth fehlgeschlagen:', e); setFbStatus('error') })
     return () => {
       window.removeEventListener('online', onOnline)
       window.removeEventListener('offline', onOffline)
@@ -43,7 +49,16 @@ export default function App() {
     ? 'Synchronisiere…'
     : lastSync
     ? `Sync ${new Date(lastSync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
-    : 'Noch nicht synchronisiert'
+    : 'Nicht synchronisiert'
+
+  // Firebase-Status Indikator
+  const fbIndicator = !firebaseReady
+    ? { icon: '○', label: 'Kein Firebase', color: 'text-gray-400' }
+    : fbStatus === 'connected'
+    ? { icon: '●', label: 'DB verbunden', color: 'text-green-600 dark:text-green-400' }
+    : fbStatus === 'error'
+    ? { icon: '●', label: 'DB Fehler', color: 'text-red-500' }
+    : { icon: '◌', label: 'DB…', color: 'text-gray-400' }
 
   return (
     <div className="flex flex-col h-svh max-w-lg mx-auto bg-white dark:bg-gray-900">
@@ -53,13 +68,21 @@ export default function App() {
           ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
           : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400'
       }`}>
-        <span>{online ? '● Online' : '○ Offline'}</span>
+        {/* Links: Internet + Firebase Status */}
+        <div className="flex items-center gap-2">
+          <span>{online ? '● Online' : '○ Offline'}</span>
+          <span className={`${fbIndicator.color}`}>{fbIndicator.icon} {fbIndicator.label}</span>
+        </div>
+
+        {/* Mitte: Sync-Zeit */}
         <span>{syncLabel}</span>
+
+        {/* Rechts: Sync-Button + Dark Mode */}
         <div className="flex items-center gap-2">
           {online && !syncing && (
-            <button onClick={doSync} className="underline">Jetzt sync</button>
+            <button onClick={doSync} className="underline">↑ Sync</button>
           )}
-          <button onClick={toggleDark} className="text-base" title="Dark Mode umschalten">
+          <button onClick={toggleDark} className="text-base" title="Dark Mode">
             {dark ? '☀️' : '🌙'}
           </button>
         </div>
