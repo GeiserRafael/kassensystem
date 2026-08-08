@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { SaleView } from './components/sale/SaleView'
 import { SettingsView } from './components/settings/SettingsView'
-import { syncSalesToFirestore, getLastSyncedAt } from './db/sync'
+import { syncSalesToFirestore, getLastSyncedAt, pullCatalogFromFirestore, subscribeToProductChanges } from './db/sync'
 import { ensureSignedIn, firebaseReady } from './firebase'
 import { useDarkMode } from './hooks/useDarkMode'
 
@@ -37,7 +37,12 @@ export default function App() {
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
     ensureSignedIn()
-      .then(() => { setFbStatus('connected'); doSync() })
+      .then(() => {
+        setFbStatus('connected')
+        pullCatalogFromFirestore().catch(console.error)
+        doSync()
+        return subscribeToProductChanges()
+      })
       .catch((e) => { console.warn('Auth fehlgeschlagen:', e); setFbStatus('error') })
     return () => {
       window.removeEventListener('online', onOnline)

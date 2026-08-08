@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/db'
 import type { Category, Product } from '../../db/types'
 import { formatCent } from '../../utils'
+import { pushProductToFirestore, pushCategoryToFirestore, deleteCategoryFromFirestore } from '../../db/sync'
 
 const CATEGORY_COLORS = ['#3b82f6', '#f97316', '#22c55e', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899']
 
@@ -23,25 +24,36 @@ export function SettingsView() {
   async function saveProduct() {
     if (!editingProduct?.name || !editingProduct.price) return
     const now = Date.now()
+    let saved: Product
     if (editingProduct.id) {
       await db.products.update(editingProduct.id, { ...editingProduct, lastModified: now })
+      saved = { ...editingProduct as Product, lastModified: now }
     } else {
       const count = await db.products.count()
-      await db.products.add({ ...editingProduct as Product, sortOrder: count, lastModified: now })
+      const newProduct = { ...editingProduct as Product, sortOrder: count, lastModified: now }
+      const id = await db.products.add(newProduct)
+      saved = { ...newProduct, id: id as number }
     }
+    pushProductToFirestore(saved).catch(console.error)
     setEditingProduct(null)
   }
 
   async function toggleSoldOut(p: Product) {
-    await db.products.update(p.id!, { isSoldOut: !p.isSoldOut, lastModified: Date.now() })
+    const updated = { ...p, isSoldOut: !p.isSoldOut, lastModified: Date.now() }
+    await db.products.update(p.id!, updated)
+    pushProductToFirestore(updated).catch(console.error)
   }
 
   async function toggleActive(p: Product) {
-    await db.products.update(p.id!, { isActive: !p.isActive, lastModified: Date.now() })
+    const updated = { ...p, isActive: !p.isActive, lastModified: Date.now() }
+    await db.products.update(p.id!, updated)
+    pushProductToFirestore(updated).catch(console.error)
   }
 
   async function toggleFavorite(p: Product) {
-    await db.products.update(p.id!, { isFavorite: !p.isFavorite, lastModified: Date.now() })
+    const updated = { ...p, isFavorite: !p.isFavorite, lastModified: Date.now() }
+    await db.products.update(p.id!, updated)
+    pushProductToFirestore(updated).catch(console.error)
   }
 
   function newCategory() {
@@ -51,11 +63,16 @@ export function SettingsView() {
   async function saveCategory() {
     if (!editingCategory?.name) return
     const now = Date.now()
+    let saved: Category
     if (editingCategory.id) {
       await db.categories.update(editingCategory.id, { ...editingCategory, lastModified: now })
+      saved = { ...editingCategory as Category, lastModified: now }
     } else {
-      await db.categories.add({ ...editingCategory as Category, lastModified: now })
+      const newCat = { ...editingCategory as Category, lastModified: now }
+      const id = await db.categories.add(newCat)
+      saved = { ...newCat, id: id as number }
     }
+    pushCategoryToFirestore(saved).catch(console.error)
     setEditingCategory(null)
   }
 
@@ -66,6 +83,7 @@ export function SettingsView() {
       return
     }
     await db.categories.delete(id)
+    deleteCategoryFromFirestore(id).catch(console.error)
   }
 
   function saveUserName() {
