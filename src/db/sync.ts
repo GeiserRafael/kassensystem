@@ -6,7 +6,6 @@ import {
 } from 'firebase/firestore'
 import { firestore } from '../firebase'
 import { db } from './db'
-import type { Sale } from './types'
 
 const SYNC_KEY = 'lastSyncedAt'
 
@@ -17,8 +16,10 @@ function clean<T extends object>(obj: T): Record<string, unknown> {
 }
 
 export async function syncSalesToFirestore(): Promise<number> {
+  if (!firestore) return 0
+
   const unsyncedSales = await db.sales
-    .filter((s) => !(s as Sale & { synced?: boolean }).synced)
+    .filter((s) => !s.synced)
     .toArray()
 
   if (unsyncedSales.length === 0) return 0
@@ -27,25 +28,20 @@ export async function syncSalesToFirestore(): Promise<number> {
   const salesCol = collection(firestore, 'sales')
 
   for (const sale of unsyncedSales) {
-    const ref = doc(salesCol, sale.id)
-    batch.set(ref, {
-      ...clean(sale),
-      syncedAt: serverTimestamp(),
-    })
+    const ref = doc(salesCol, sale.id!)
+    batch.set(ref, { ...clean(sale), syncedAt: serverTimestamp() })
   }
 
   await batch.commit()
 
-  // Lokal als synced markieren
-  await db.sales.bulkPut(
-    unsyncedSales.map((s) => ({ ...s, synced: true }))
-  )
-
+  await db.sales.bulkPut(unsyncedSales.map((s) => ({ ...s, synced: true })))
   localStorage.setItem(SYNC_KEY, new Date().toISOString())
   return unsyncedSales.length
 }
 
 export async function uploadCatalogToFirestore(): Promise<void> {
+  if (!firestore) return
+
   const [categories, products] = await Promise.all([
     db.categories.toArray(),
     db.products.toArray(),
@@ -54,13 +50,10 @@ export async function uploadCatalogToFirestore(): Promise<void> {
   const batch = writeBatch(firestore)
 
   for (const cat of categories) {
-    const ref = doc(firestore, 'categories', String(cat.id))
-    batch.set(ref, clean(cat), { merge: true })
+    batch.set(doc(firestore, 'categories', String(cat.id)), clean(cat), { merge: true })
   }
-
   for (const prod of products) {
-    const ref = doc(firestore, 'products', String(prod.id))
-    batch.set(ref, clean(prod), { merge: true })
+    batch.set(doc(firestore, 'products', String(prod.id)), clean(prod), { merge: true })
   }
 
   await batch.commit()
