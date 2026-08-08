@@ -92,14 +92,14 @@ export function subscribeToProductChanges(): Unsubscribe {
   const unsub1 = onSnapshot(collection(firestore, 'products'), async (snap) => {
     if (!productsReady) {
       productsReady = true
-      const prods = snap.docs.map((d) => d.data() as Product)
+      const prods = snap.docs.map((d) => ({ ...(d.data() as Product), id: Number(d.id) }))
       if (prods.length > 0) {
         await db.products.clear()
         await db.products.bulkAdd(prods)
       }
     } else {
       for (const change of snap.docChanges()) {
-        const remote = change.doc.data() as Product
+        const remote = { ...(change.doc.data() as Product), id: Number(change.doc.id) }
         if (change.type === 'removed') {
           await db.products.delete(remote.id!)
         } else {
@@ -112,14 +112,14 @@ export function subscribeToProductChanges(): Unsubscribe {
   const unsub2 = onSnapshot(collection(firestore, 'categories'), async (snap) => {
     if (!categoriesReady) {
       categoriesReady = true
-      const cats = snap.docs.map((d) => d.data() as Category)
+      const cats = snap.docs.map((d) => ({ ...(d.data() as Category), id: Number(d.id) }))
       if (cats.length > 0) {
         await db.categories.clear()
         await db.categories.bulkAdd(cats)
       }
     } else {
       for (const change of snap.docChanges()) {
-        const remote = change.doc.data() as Category
+        const remote = { ...(change.doc.data() as Category), id: Number(change.doc.id) }
         if (change.type === 'removed') {
           await db.categories.delete(remote.id!)
         } else {

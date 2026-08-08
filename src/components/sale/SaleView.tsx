@@ -83,7 +83,7 @@ export function SaleView() {
 
       {/* Product grid */}
       <div
-        className="grid gap-2 p-2 overflow-y-auto"
+        className="flex-1 min-h-0 grid gap-2 p-2 overflow-y-auto content-start"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))' }}
       >
         {visibleProducts.map((p) => (
@@ -169,18 +169,18 @@ export function SaleView() {
           {/* Action buttons */}
           <div className="flex gap-2">
             <button
-              onClick={removeLastAdded}
-              disabled={items.length === 0}
-              className="px-3 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium disabled:opacity-30"
-            >
-              ↩ Undo
-            </button>
-            <button
               onClick={() => { if (items.length > 0 && confirm('Kauf zurücksetzen?')) { clear(); setGiven('') } }}
               disabled={items.length === 0}
               className="px-3 py-3 rounded-xl bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 text-sm font-medium disabled:opacity-30"
             >
               🗑️ Reset
+            </button>
+            <button
+              onClick={removeLastAdded}
+              disabled={items.length === 0}
+              className="px-3 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium disabled:opacity-30"
+            >
+              ↩ Undo
             </button>
             <button
               onClick={handlePay}
