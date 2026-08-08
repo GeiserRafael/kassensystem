@@ -63,7 +63,7 @@ export function SaleView() {
   }
 
   return (
-    <div className="flex flex-col h-svh bg-gray-50 dark:bg-gray-900" style={{ '--cat-color': catColor } as React.CSSProperties}>
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900" style={{ '--cat-color': catColor } as React.CSSProperties}>
       {/* Category tabs */}
       <div className="flex gap-1 px-2 pt-2 pb-1 overflow-x-auto shrink-0 bg-white dark:bg-gray-800 shadow-sm">
         {(activeCatsWithProducts ?? []).map((cat) => (

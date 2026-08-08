@@ -43,7 +43,7 @@ export function AnalyseView() {
   const productRows = [...byProduct.entries()].sort((a, b) => b[1].revenue - a[1].revenue)
 
   return (
-    <div className="flex flex-col h-svh bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
       <div className="p-3 space-y-4">
 
         {/* Gesamt-Karte */}

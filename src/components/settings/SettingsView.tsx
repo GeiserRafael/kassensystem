@@ -95,7 +95,7 @@ export function SettingsView() {
   const catColor = (id: number) => categories?.find((c) => c.id === id)?.color ?? '#9ca3af'
 
   return (
-    <div className="flex flex-col h-svh bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       {/* Tab bar */}
       <div className="flex bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
         {(['products', 'categories', 'user'] as const).map((t) => (
