@@ -38,6 +38,7 @@ export interface Sale {
   total: number        // in Cent
   given: number        // in Cent
   change: number       // in Cent
+  synced?: boolean
 }
 
 export interface User {

@@ -29,4 +29,14 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id: string) => {
+          if (id.includes('firebase')) return 'firebase'
+          if (id.includes('node_modules')) return 'vendor'
+        },
+      },
+    },
+  },
 })
