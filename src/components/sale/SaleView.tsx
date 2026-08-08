@@ -176,6 +176,13 @@ export function SaleView() {
               ↩ Undo
             </button>
             <button
+              onClick={() => { if (items.length > 0 && confirm('Kauf zurücksetzen?')) { clear(); setGiven('') } }}
+              disabled={items.length === 0}
+              className="px-3 py-3 rounded-xl bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 text-sm font-medium disabled:opacity-30"
+            >
+              🗑️ Reset
+            </button>
+            <button
               onClick={handlePay}
               disabled={items.length === 0}
               className={`

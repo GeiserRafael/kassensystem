@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { SaleView } from './components/sale/SaleView'
 import { SettingsView } from './components/settings/SettingsView'
+import { AnalyseView } from './components/analyse/AnalyseView'
 import { UserNamePrompt } from './components/UserNamePrompt'
 import { syncSalesToFirestore, getLastSyncedAt, subscribeToProductChanges } from './db/sync'
 import { ensureSignedIn, firebaseReady } from './firebase'
 import { useDarkMode } from './hooks/useDarkMode'
 
-type Tab = 'sale' | 'settings'
+type Tab = 'sale' | 'settings' | 'analyse'
 type FirebaseStatus = 'unknown' | 'connected' | 'error'
 
 export default function App() {
@@ -102,6 +103,7 @@ export default function App() {
       <main className="flex-1 overflow-hidden">
         {tab === 'sale' && <SaleView />}
         {tab === 'settings' && <SettingsView />}
+        {tab === 'analyse' && <AnalyseView />}
       </main>
 
       {/* Bottom nav */}
@@ -114,6 +116,15 @@ export default function App() {
         >
           <span className="text-2xl">🛒</span>
           <span>Verkauf</span>
+        </button>
+        <button
+          onClick={() => setTab('analyse')}
+          className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${
+            tab === 'analyse' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+          }`}
+        >
+          <span className="text-2xl">📊</span>
+          <span>Analyse</span>
         </button>
         <button
           onClick={() => setTab('settings')}
