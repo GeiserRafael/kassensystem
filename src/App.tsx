@@ -53,91 +53,89 @@ export default function App() {
   }, [])
 
   const syncLabel = syncing
-    ? 'Synchronisiere…'
+    ? 'Sync…'
     : lastSync
-    ? `Sync ${new Date(lastSync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
-    : 'Nicht synchronisiert'
+    ? `${new Date(lastSync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
+    : '—'
 
-  // Firebase-Status Indikator
-  const fbIndicator = !firebaseReady
-    ? { icon: '○', label: 'Kein Firebase', color: 'text-gray-400' }
+  const dbDot = !firebaseReady
+    ? 'bg-gray-400'
     : fbStatus === 'connected'
-    ? { icon: '●', label: 'DB verbunden', color: 'text-green-600 dark:text-green-400' }
+    ? 'bg-green-500'
     : fbStatus === 'error'
-    ? { icon: '●', label: 'DB Fehler', color: 'text-red-500' }
-    : { icon: '◌', label: 'DB…', color: 'text-gray-400' }
+    ? 'bg-red-500'
+    : 'bg-yellow-400'
+
+  const tabs: { id: Tab; label: string; icon: string }[] = [
+    { id: 'sale',     label: 'Verkauf',       icon: '🛒' },
+    { id: 'analyse',  label: 'Analyse',        icon: '📊' },
+    { id: 'settings', label: 'Einstellungen',  icon: '⚙️' },
+  ]
 
   return (
     <>
-      {!userName && (
-        <UserNamePrompt onSave={(name) => setUserName(name)} />
-      )}
+      {!userName && <UserNamePrompt onSave={(name) => setUserName(name)} />}
       {userName && (
-    <div className="flex flex-col h-svh max-w-lg mx-auto bg-white dark:bg-gray-900" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      {/* Sync-Status-Leiste */}
-      <div className={`flex items-center justify-between px-3 py-1 text-xs shrink-0 ${
-        online
-          ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
-          : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400'
-      }`}>
-        {/* Links: Internet + Firebase Status */}
-        <div className="flex items-center gap-2">
-          <span>{online ? '● Online' : '○ Offline'}</span>
-          <span className={`${fbIndicator.color}`}>{fbIndicator.icon} {fbIndicator.label}</span>
+        <div
+          className="flex flex-col bg-[#f2f2f7] dark:bg-black"
+          style={{
+            height: '100svh',
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          {/* iOS-style compact status bar */}
+          <div className={`flex items-center justify-between px-4 py-1.5 text-[11px] font-medium shrink-0 ${
+            online
+              ? 'bg-[#f2f2f7]/80 dark:bg-black/80 text-[#3c3c43]/60 dark:text-white/40'
+              : 'bg-yellow-50 dark:bg-yellow-950/60 text-yellow-700 dark:text-yellow-400'
+          }`}
+          style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-green-500' : 'bg-yellow-400'}`} />
+              <span>{online ? 'Online' : 'Offline'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${dbDot}`} />
+              <span>{!firebaseReady ? 'Lokal' : fbStatus === 'connected' ? 'Verbunden' : fbStatus === 'error' ? 'Fehler' : '…'}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span>{syncLabel}</span>
+              {online && !syncing && (
+                <button onClick={doSync} className="text-[#007aff] dark:text-[#0a84ff] font-semibold">Sync</button>
+              )}
+              <button onClick={toggleDark} className="text-sm">{dark ? '☀️' : '🌙'}</button>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <main className="flex-1 min-h-0 overflow-hidden">
+            {tab === 'sale'     && <SaleView />}
+            {tab === 'settings' && <SettingsView />}
+            {tab === 'analyse'  && <AnalyseView />}
+          </main>
+
+          {/* iOS Tab Bar */}
+          <nav
+            className="flex shrink-0 border-t border-[#3c3c43]/20 dark:border-white/10 bg-[#f2f2f7]/80 dark:bg-[#1c1c1e]/80"
+            style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+          >
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex-1 flex flex-col items-center pt-2 pb-1 gap-0.5 transition-opacity active:opacity-60 ${
+                  tab === t.id
+                    ? 'text-[#007aff] dark:text-[#0a84ff]'
+                    : 'text-[#3c3c43]/50 dark:text-white/35'
+                }`}
+              >
+                <span className="text-[22px] leading-none">{t.icon}</span>
+                <span className="text-[10px] font-medium tracking-tight">{t.label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
-
-        {/* Mitte: Sync-Zeit */}
-        <span>{syncLabel}</span>
-
-        {/* Rechts: Sync-Button + Dark Mode */}
-        <div className="flex items-center gap-2">
-          {online && !syncing && (
-            <button onClick={doSync} className="underline">↑ Sync</button>
-          )}
-          <button onClick={toggleDark} className="text-base" title="Dark Mode">
-            {dark ? '☀️' : '🌙'}
-          </button>
-        </div>
-      </div>
-
-      <main className="flex-1 min-h-0 overflow-hidden">
-        {tab === 'sale' && <SaleView />}
-        {tab === 'settings' && <SettingsView />}
-        {tab === 'analyse' && <AnalyseView />}
-      </main>
-
-      {/* Bottom nav */}
-      <nav className="flex bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shrink-0">
-        <button
-          onClick={() => setTab('sale')}
-          className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-            tab === 'sale' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-          }`}
-        >
-          <span className="text-2xl">🛒</span>
-          <span>Verkauf</span>
-        </button>
-        <button
-          onClick={() => setTab('analyse')}
-          className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-            tab === 'analyse' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-          }`}
-        >
-          <span className="text-2xl">📊</span>
-          <span>Analyse</span>
-        </button>
-        <button
-          onClick={() => setTab('settings')}
-          className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-            tab === 'settings' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-          }`}
-        >
-          <span className="text-2xl">⚙️</span>
-          <span>Einstellungen</span>
-        </button>
-      </nav>
-    </div>
-    )}
+      )}
     </>
   )
 }

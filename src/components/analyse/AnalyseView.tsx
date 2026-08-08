@@ -7,18 +7,21 @@ export function AnalyseView() {
     db.sales.where('type').equals('sale').toArray()
   )
 
-  if (!sales) return <div className="flex items-center justify-center h-full text-gray-400">Lade…</div>
-  if (sales.length === 0) return (
-    <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 dark:text-gray-500">
-      <span className="text-4xl">📊</span>
-      <span>Noch keine Verkäufe</span>
+  if (!sales) return (
+    <div className="flex items-center justify-center h-full text-[#3c3c43]/40 dark:text-white/25 text-[15px]">
+      Lade…
     </div>
   )
 
-  // --- Gesamt ---
+  if (sales.length === 0) return (
+    <div className="flex flex-col items-center justify-center h-full gap-3 text-[#3c3c43]/40 dark:text-white/25">
+      <span className="text-5xl">📊</span>
+      <span className="text-[17px] font-medium">Noch keine Verkäufe</span>
+    </div>
+  )
+
   const totalRevenue = sales.reduce((s, sale) => s + sale.total, 0)
 
-  // --- Pro Nutzer ---
   const byUser = new Map<string, { count: number; revenue: number }>()
   for (const sale of sales) {
     const u = sale.userId || 'Unbekannt'
@@ -27,7 +30,6 @@ export function AnalyseView() {
   }
   const userRows = [...byUser.entries()].sort((a, b) => b[1].revenue - a[1].revenue)
 
-  // --- Pro Produkt ---
   const byProduct = new Map<string, { icon: string; count: number; revenue: number }>()
   for (const sale of sales) {
     for (const item of sale.lineItems) {
@@ -43,58 +45,56 @@ export function AnalyseView() {
   const productRows = [...byProduct.entries()].sort((a, b) => b[1].revenue - a[1].revenue)
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-      <div className="p-3 space-y-4">
+    <div className="h-full overflow-y-auto bg-[#f2f2f7] dark:bg-black">
+      <div className="pb-6">
 
-        {/* Gesamt-Karte */}
-        <div className="bg-green-600 rounded-2xl p-4 text-white">
-          <div className="text-sm opacity-80">Gesamtumsatz</div>
-          <div className="text-4xl font-bold mt-1">{formatCent(totalRevenue)}</div>
-          <div className="text-sm opacity-80 mt-1">{sales.length} Verkäufe</div>
+        {/* Hero metric card */}
+        <div className="mx-4 mt-4 rounded-2xl overflow-hidden bg-[#34c759] dark:bg-[#30d158] p-5 shadow-sm">
+          <div className="text-white/75 text-[13px] font-medium uppercase tracking-wide">Gesamtumsatz</div>
+          <div className="text-white text-[40px] font-bold tracking-tight mt-0.5">{formatCent(totalRevenue)}</div>
+          <div className="text-white/65 text-[13px] mt-1">{sales.length} {sales.length === 1 ? 'Verkauf' : 'Verkäufe'}</div>
         </div>
 
-        {/* Pro Nutzer */}
-        <div>
-          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide px-1 mb-2">
-            Verkäufe pro Mitarbeiter
-          </h2>
-          <div className="space-y-2">
-            {userRows.map(([name, stats]) => (
-              <div key={name} className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-sm shrink-0">
+        {/* Per user */}
+        <div className="px-4 pt-5 pb-1">
+          <span className="text-[13px] font-semibold text-[#3c3c43]/60 dark:text-white/40 uppercase tracking-wide">Mitarbeiter</span>
+        </div>
+        <div className="mx-4 rounded-2xl overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-sm">
+          {userRows.map(([name, stats], i) => (
+            <div key={name}>
+              {i > 0 && <div className="h-px bg-[#3c3c43]/10 dark:bg-white/8 ml-[60px]" />}
+              <div className="px-4 py-3 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#007aff]/15 dark:bg-[#0a84ff]/20 flex items-center justify-center text-[#007aff] dark:text-[#0a84ff] font-bold text-[15px] shrink-0">
                   {name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 dark:text-gray-100 truncate">{name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{stats.count} Verkäufe</div>
+                  <div className="text-[15px] font-medium text-[#1c1c1e] dark:text-white truncate">{name}</div>
+                  <div className="text-[12px] text-[#3c3c43]/50 dark:text-white/35">{stats.count} {stats.count === 1 ? 'Verkauf' : 'Verkäufe'}</div>
                 </div>
-                <div className="font-bold text-gray-900 dark:text-white text-right">
-                  {formatCent(stats.revenue)}
-                </div>
+                <div className="text-[17px] font-semibold text-[#1c1c1e] dark:text-white">{formatCent(stats.revenue)}</div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
-        {/* Pro Produkt */}
-        <div>
-          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide px-1 mb-2">
-            Verkäufe pro Produkt
-          </h2>
-          <div className="space-y-2">
-            {productRows.map(([name, stats]) => (
-              <div key={name} className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center gap-3">
-                <span className="text-2xl shrink-0">{stats.icon}</span>
+        {/* Per product */}
+        <div className="px-4 pt-5 pb-1">
+          <span className="text-[13px] font-semibold text-[#3c3c43]/60 dark:text-white/40 uppercase tracking-wide">Produkte</span>
+        </div>
+        <div className="mx-4 rounded-2xl overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-sm">
+          {productRows.map(([name, stats], i) => (
+            <div key={name}>
+              {i > 0 && <div className="h-px bg-[#3c3c43]/10 dark:bg-white/8 ml-[60px]" />}
+              <div className="px-4 py-3 flex items-center gap-3">
+                <span className="text-[28px] w-9 text-center shrink-0">{stats.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 dark:text-gray-100 truncate">{name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{stats.count}× verkauft</div>
+                  <div className="text-[15px] font-medium text-[#1c1c1e] dark:text-white truncate">{name}</div>
+                  <div className="text-[12px] text-[#3c3c43]/50 dark:text-white/35">{stats.count}× verkauft</div>
                 </div>
-                <div className="font-bold text-gray-900 dark:text-white text-right">
-                  {formatCent(stats.revenue)}
-                </div>
+                <div className="text-[17px] font-semibold text-[#1c1c1e] dark:text-white">{formatCent(stats.revenue)}</div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
       </div>

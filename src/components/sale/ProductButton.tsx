@@ -16,24 +16,28 @@ export function ProductButton({ product }: Props) {
       onClick={() => addProduct(product)}
       disabled={product.isSoldOut}
       className={`
-        relative flex flex-col items-center justify-center gap-1
-        rounded-2xl p-3 min-h-[88px] w-full
-        text-white font-medium text-sm leading-tight
-        active:scale-95 transition-transform
+        relative flex flex-col items-center justify-center gap-1.5
+        rounded-2xl p-3 min-h-[96px] w-full
+        text-white font-semibold text-[13px] leading-tight
+        active:scale-95 transition-transform shadow-sm
         ${product.isSoldOut ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
       `}
-      style={{ backgroundColor: product.isSoldOut ? '#9ca3af' : undefined, background: product.isSoldOut ? undefined : 'var(--cat-color, #3b82f6)' }}
+      style={{
+        background: product.isSoldOut
+          ? '#9ca3af'
+          : `var(--cat-color, #007aff)`,
+      }}
     >
       {qty > 0 && (
-        <span className="absolute top-1.5 right-1.5 bg-white text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+        <span className="absolute top-2 right-2 bg-white text-[#1c1c1e] text-[11px] font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center leading-none shadow-sm">
           {qty}
         </span>
       )}
-      <span className="text-3xl leading-none">{product.icon}</span>
-      <span className="text-center break-words w-full">{product.name}</span>
-      <span className="text-xs opacity-80">{formatCent(product.price)}</span>
+      <span className="text-[32px] leading-none">{product.icon}</span>
+      <span className="text-center break-words w-full leading-snug">{product.name}</span>
+      <span className="text-[11px] opacity-80 font-medium">{formatCent(product.price)}</span>
       {product.isSoldOut && (
-        <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/30 text-xs font-bold">
+        <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/25 text-[11px] font-bold">
           Ausverkauft
         </span>
       )}

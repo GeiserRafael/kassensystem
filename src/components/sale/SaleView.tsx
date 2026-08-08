@@ -39,7 +39,7 @@ export function SaleView() {
 
   const currentCatId = activeCatId ?? activeCatsWithProducts?.[0]?.id ?? null
   const visibleProducts = products?.filter((p) => p.categoryId === currentCatId) ?? []
-  const catColor = (categories ?? []).find((c) => c.id === currentCatId)?.color ?? '#3b82f6'
+  const catColor = (categories ?? []).find((c) => c.id === currentCatId)?.color ?? '#007aff'
 
   async function handlePay() {
     if (items.length === 0) return
@@ -58,140 +58,141 @@ export function SaleView() {
     setGiven('')
     setPaid(true)
     setTimeout(() => setPaid(false), 1500)
-    // Sofort zu Firestore hochladen wenn online
     if (navigator.onLine) syncSalesToFirestore().catch(console.error)
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900" style={{ '--cat-color': catColor } as React.CSSProperties}>
-      {/* Category tabs */}
-      <div className="flex gap-1 px-2 pt-2 pb-1 overflow-x-auto shrink-0 bg-white dark:bg-gray-800 shadow-sm">
-        {(activeCatsWithProducts ?? []).map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCatId(cat.id!)}
-            className={`
-              px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap shrink-0 transition-colors
-              ${cat.id === currentCatId ? 'text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
-            `}
-            style={cat.id === currentCatId ? { backgroundColor: cat.color } : undefined}
-          >
-            {cat.name}
-          </button>
-        ))}
+    <div
+      className="flex flex-col h-full bg-[#f2f2f7] dark:bg-black"
+      style={{ '--cat-color': catColor } as React.CSSProperties}
+    >
+      {/* Category pill tabs — iOS Segmented-style */}
+      <div className="px-4 pt-3 pb-2 shrink-0">
+        <div className="flex gap-2 overflow-x-auto">
+          {(activeCatsWithProducts ?? []).map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCatId(cat.id!)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap shrink-0 transition-all active:opacity-70 ${
+                cat.id === currentCatId
+                  ? 'text-white shadow-sm'
+                  : 'bg-white/70 dark:bg-white/10 text-[#3c3c43] dark:text-white/80'
+              }`}
+              style={cat.id === currentCatId ? { backgroundColor: cat.color } : undefined}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Product grid */}
       <div
-        className="flex-1 min-h-0 grid gap-2 p-2 overflow-y-auto content-start"
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))' }}
+        className="flex-1 min-h-0 grid gap-2.5 px-4 pb-2 overflow-y-auto content-start"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))' }}
       >
         {visibleProducts.map((p) => (
           <ProductButton key={p.id} product={p} />
         ))}
       </div>
 
-      {/* Cart + payment */}
-      <div className="shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+      {/* Cart + payment — iOS card */}
+      <div className="shrink-0 bg-white/80 dark:bg-[#1c1c1e]/90 border-t border-[#3c3c43]/10 dark:border-white/8"
+        style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+      >
         {/* Cart items */}
         {items.length > 0 && (
-          <div className="px-3 pt-2 space-y-1 max-h-40 overflow-y-auto">
+          <div className="px-4 pt-3 space-y-1 max-h-36 overflow-y-auto">
             {items.map((item) => (
               <div key={item.productId} className="flex items-center gap-2">
-                <span className="text-lg">{item.icon}</span>
-                <span className="flex-1 text-sm truncate text-gray-800 dark:text-gray-200">{item.name}</span>
-                <div className="flex items-center gap-1">
+                <span className="text-xl">{item.icon}</span>
+                <span className="flex-1 text-[15px] truncate text-[#1c1c1e] dark:text-white">{item.name}</span>
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => removeOne(item.productId)}
-                    className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 font-bold text-lg flex items-center justify-center"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center text-sm font-semibold text-gray-800 dark:text-gray-200">{item.qty}</span>
+                    className="w-7 h-7 rounded-full bg-[#ff3b30]/15 dark:bg-[#ff453a]/20 text-[#ff3b30] dark:text-[#ff453a] font-bold text-lg flex items-center justify-center"
+                  >−</button>
+                  <span className="w-5 text-center text-[15px] font-semibold text-[#1c1c1e] dark:text-white">{item.qty}</span>
                   <button
                     onClick={() => addProduct({ id: item.productId, name: item.name, icon: item.icon, price: item.unitPrice, categoryId: 0, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0, lastModified: 0 })}
-                    className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-400 font-bold text-lg flex items-center justify-center"
-                  >
-                    +
-                  </button>
+                    className="w-7 h-7 rounded-full bg-[#34c759]/15 dark:bg-[#30d158]/20 text-[#34c759] dark:text-[#30d158] font-bold text-lg flex items-center justify-center"
+                  >+</button>
                 </div>
-                <span className="text-sm font-medium w-16 text-right text-gray-800 dark:text-gray-200">{formatCent(item.lineTotal)}</span>
+                <span className="text-[14px] font-medium w-16 text-right text-[#3c3c43] dark:text-white/70">{formatCent(item.lineTotal)}</span>
               </div>
             ))}
           </div>
         )}
 
-        <div className="px-3 py-2 space-y-2">
+        <div className="px-4 pt-3 pb-3 space-y-3">
           {/* Total */}
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Gesamt</span>
-            <span className="text-3xl font-bold text-gray-900 dark:text-white">{formatCent(total)}</span>
+          <div className="flex justify-between items-baseline">
+            <span className="text-[17px] font-semibold text-[#3c3c43] dark:text-white/60">Gesamt</span>
+            <span className="text-[34px] font-bold tracking-tight text-[#1c1c1e] dark:text-white">{formatCent(total)}</span>
           </div>
 
-          {/* Given amount */}
+          {/* Given amount + change */}
           <div className="flex gap-2 items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">Gegeben</span>
+            <span className="text-[15px] text-[#3c3c43]/60 dark:text-white/40 shrink-0">Gegeben</span>
             <input
               type="number"
               inputMode="decimal"
               placeholder="0,00"
               value={given}
               onChange={(e) => setGiven(e.target.value)}
-              className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 text-right text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="flex-1 bg-[#f2f2f7] dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2 text-right text-[17px] font-semibold focus:outline-none focus:ring-2 focus:ring-[#007aff]"
             />
             {givenCent >= total && total > 0 && (
               <div className="text-right shrink-0">
-                <div className="text-xs text-gray-500 dark:text-gray-400">Rückgeld</div>
-                <div className="text-xl font-bold text-green-600 dark:text-green-400">{formatCent(change)}</div>
+                <div className="text-[11px] text-[#3c3c43]/50 dark:text-white/40">Rückgeld</div>
+                <div className="text-[20px] font-bold text-[#34c759] dark:text-[#30d158]">{formatCent(change)}</div>
               </div>
             )}
           </div>
 
-          {/* Quick amount buttons */}
+          {/* Quick amounts */}
           <div className="flex gap-2">
             {QUICK_AMOUNTS.map((amt) => (
               <button
                 key={amt}
                 onClick={() => setGiven((amt / 100).toFixed(2))}
-                className="flex-1 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium active:bg-gray-200 dark:active:bg-gray-600"
+                className="flex-1 py-2 rounded-xl bg-[#f2f2f7] dark:bg-white/8 text-[#1c1c1e] dark:text-white text-[13px] font-semibold active:opacity-60 transition-opacity"
               >
                 {formatCent(amt).replace(' €', '€')}
               </button>
             ))}
             <button
               onClick={() => setGiven((total / 100).toFixed(2))}
-              className="flex-1 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm font-medium"
+              className="flex-1 py-2 rounded-xl bg-[#007aff]/12 dark:bg-[#0a84ff]/15 text-[#007aff] dark:text-[#0a84ff] text-[13px] font-semibold active:opacity-60 transition-opacity"
             >
               Passend
             </button>
           </div>
 
-          {/* Action buttons */}
+          {/* Action row */}
           <div className="flex gap-2">
             <button
               onClick={() => { if (items.length > 0 && confirm('Kauf zurücksetzen?')) { clear(); setGiven('') } }}
               disabled={items.length === 0}
-              className="px-3 py-3 rounded-xl bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 text-sm font-medium disabled:opacity-30"
+              className="px-4 py-3 rounded-xl bg-[#ff3b30]/12 dark:bg-[#ff453a]/15 text-[#ff3b30] dark:text-[#ff453a] text-[15px] font-semibold disabled:opacity-30 active:opacity-60 transition-opacity"
             >
-              🗑️ Reset
+              🗑️
             </button>
             <button
               onClick={removeLastAdded}
               disabled={items.length === 0}
-              className="px-3 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium disabled:opacity-30"
+              className="px-4 py-3 rounded-xl bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43] dark:text-white/70 text-[15px] font-semibold disabled:opacity-30 active:opacity-60 transition-opacity"
             >
-              ↩ Undo
+              ↩
             </button>
             <button
               onClick={handlePay}
               disabled={items.length === 0}
-              className={`
-                flex-1 py-3 rounded-xl text-white text-lg font-bold
-                transition-all active:scale-95
-                ${paid ? 'bg-blue-500' : 'bg-green-600 disabled:opacity-40'}
-              `}
+              className={`flex-1 py-3 rounded-xl text-white text-[17px] font-bold transition-all active:opacity-80 disabled:opacity-35 ${
+                paid ? 'bg-[#34c759] dark:bg-[#30d158]' : 'bg-[#34c759] dark:bg-[#30d158]'
+              }`}
             >
-              {paid ? '✓ Gespeichert' : `Bezahlen ${items.length > 0 ? formatCent(total) : ''}`}
+              {paid ? '✓ Gespeichert' : `Bezahlen${items.length > 0 ? '  ' + formatCent(total) : ''}`}
             </button>
           </div>
         </div>
