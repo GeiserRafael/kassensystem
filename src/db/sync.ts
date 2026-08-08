@@ -2,7 +2,6 @@ import {
   collection,
   doc,
   writeBatch,
-  getDocs,
   serverTimestamp,
   onSnapshot,
   type Unsubscribe,
@@ -82,49 +81,33 @@ export async function deleteCategoryFromFirestore(id: number): Promise<void> {
   await deleteDoc(doc(firestore, 'categories', String(id)))
 }
 
-// --- Katalog vom Server ziehen (beim App-Start) ---
-// Firestore ist die einzige Wahrheit — lokal immer überschreiben
-
-export async function pullCatalogFromFirestore(): Promise<void> {
-  if (!firestore) return
-
-  const [catSnap, prodSnap] = await Promise.all([
-    getDocs(collection(firestore, 'categories')),
-    getDocs(collection(firestore, 'products')),
-  ])
-
-  const cats = catSnap.docs.map((d) => d.data() as Category)
-  const prods = prodSnap.docs.map((d) => d.data() as Product)
-
-  if (cats.length > 0) await db.categories.bulkPut(cats)
-  if (prods.length > 0) await db.products.bulkPut(prods)
-}
-
-// --- Live-Listener: Änderungen sofort übernehmen, Firestore gewinnt immer ---
+// --- Live-Listener: beim ersten Aufruf initialer Pull + danach live Updates ---
+// Firestore gewinnt immer, kein separater pullCatalog nötig
 
 export function subscribeToProductChanges(): Unsubscribe {
   if (!firestore) return () => {}
 
-  const unsub1 = onSnapshot(collection(firestore, 'products'), (snap) => {
-    snap.docChanges().forEach(async (change) => {
+  // onSnapshot macht beim ersten Aufruf automatisch einen vollständigen Pull
+  const unsub1 = onSnapshot(collection(firestore, 'products'), async (snap) => {
+    for (const change of snap.docChanges()) {
       const remote = change.doc.data() as Product
       if (change.type === 'removed') {
         await db.products.delete(remote.id!)
       } else {
         await db.products.put(remote)
       }
-    })
+    }
   })
 
-  const unsub2 = onSnapshot(collection(firestore, 'categories'), (snap) => {
-    snap.docChanges().forEach(async (change) => {
+  const unsub2 = onSnapshot(collection(firestore, 'categories'), async (snap) => {
+    for (const change of snap.docChanges()) {
       const remote = change.doc.data() as Category
       if (change.type === 'removed') {
         await db.categories.delete(remote.id!)
       } else {
         await db.categories.put(remote)
       }
-    })
+    }
   })
 
   return () => { unsub1(); unsub2() }

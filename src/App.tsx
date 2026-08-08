@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { SaleView } from './components/sale/SaleView'
 import { SettingsView } from './components/settings/SettingsView'
-import { syncSalesToFirestore, getLastSyncedAt, pullCatalogFromFirestore, subscribeToProductChanges } from './db/sync'
+import { UserNamePrompt } from './components/UserNamePrompt'
+import { syncSalesToFirestore, getLastSyncedAt, subscribeToProductChanges } from './db/sync'
 import { ensureSignedIn, firebaseReady } from './firebase'
 import { useDarkMode } from './hooks/useDarkMode'
 
@@ -14,6 +15,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<string | null>(getLastSyncedAt())
   const [fbStatus, setFbStatus] = useState<FirebaseStatus>('unknown')
+  const [userName, setUserName] = useState<string>(localStorage.getItem('userName') ?? '')
   const { dark, toggle: toggleDark } = useDarkMode()
 
   async function doSync() {
@@ -39,7 +41,6 @@ export default function App() {
     ensureSignedIn()
       .then(() => {
         setFbStatus('connected')
-        pullCatalogFromFirestore().catch(console.error)
         doSync()
         return subscribeToProductChanges()
       })
@@ -66,6 +67,11 @@ export default function App() {
     : { icon: '◌', label: 'DB…', color: 'text-gray-400' }
 
   return (
+    <>
+      {!userName && (
+        <UserNamePrompt onSave={(name) => setUserName(name)} />
+      )}
+      {userName && (
     <div className="flex flex-col h-svh max-w-lg mx-auto bg-white dark:bg-gray-900">
       {/* Sync-Status-Leiste */}
       <div className={`flex items-center justify-between px-3 py-1 text-xs shrink-0 ${
@@ -120,5 +126,7 @@ export default function App() {
         </button>
       </nav>
     </div>
+    )}
+    </>
   )
 }
