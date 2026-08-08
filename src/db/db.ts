@@ -15,7 +15,6 @@ db.version(1).stores({
   users: '++id',
 })
 
-// Version 2: neue Seed-Daten aus Getränkekarte Bierstand
 db.version(2).stores({
   categories: '++id, sortOrder',
   products: '++id, categoryId, isActive, isFavorite, sortOrder',
@@ -26,7 +25,22 @@ db.version(2).stores({
   await tx.table('products').clear()
 })
 
+// Version 3: Duplikate bereinigen — Firestore übernimmt den Katalog
+db.version(3).stores({
+  categories: '++id, sortOrder',
+  products: '++id, categoryId, isActive, isFavorite, sortOrder',
+  sales: 'id, userId, createdAt, type',
+  users: '++id',
+}).upgrade(async (tx) => {
+  await tx.table('categories').clear()
+  await tx.table('products').clear()
+})
+
+// Seed nur wenn kein Firebase konfiguriert (reiner Offline-Betrieb)
 async function seedDefaultData() {
+  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY
+  if (apiKey) return  // Firebase vorhanden → Katalog kommt von Firestore
+
   const catCount = await db.categories.count()
   if (catCount > 0) return
 
@@ -40,17 +54,14 @@ async function seedDefaultData() {
   const [bierId, softId, weinId] = catIds as number[]
 
   await db.products.bulkAdd([
-    // Bierstand
-    { name: 'Karlsberg Urpils', icon: '🍺', categoryId: bierId, price: 300, isActive: true, isSoldOut: false, isFavorite: true,  sortOrder: 0, lastModified: now },
-    { name: 'Radler/Mixery',    icon: '🍺', categoryId: bierId, price: 300, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 1, lastModified: now },
-    { name: 'Alk.frei/Grapefruit', icon: '🍺', categoryId: bierId, price: 300, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 2, lastModified: now },
-    // Softdrinks
-    { name: 'Fanta/Cola/Light', icon: '🥤', categoryId: softId, price: 200, isActive: true, isSoldOut: false, isFavorite: true,  sortOrder: 0, lastModified: now },
-    { name: 'Apfelsaftschorle', icon: '🍎', categoryId: softId, price: 200, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 1, lastModified: now },
-    { name: 'Wasser',           icon: '💧', categoryId: softId, price: 200, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 2, lastModified: now },
-    // Wein
-    { name: 'Weinschorle',      icon: '🥂', categoryId: weinId, price: 350, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0, lastModified: now },
-    { name: 'Weiß-/Rot-/Rosé', icon: '🍷', categoryId: weinId, price: 450, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 1, lastModified: now },
+    { name: 'Karlsberg Urpils',   icon: '🍺', categoryId: bierId, price: 300, isActive: true, isSoldOut: false, isFavorite: true,  sortOrder: 0, lastModified: now },
+    { name: 'Radler/Mixery',      icon: '🍺', categoryId: bierId, price: 300, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 1, lastModified: now },
+    { name: 'Alk.frei/Grapefruit',icon: '🍺', categoryId: bierId, price: 300, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 2, lastModified: now },
+    { name: 'Fanta/Cola/Light',   icon: '🥤', categoryId: softId, price: 200, isActive: true, isSoldOut: false, isFavorite: true,  sortOrder: 0, lastModified: now },
+    { name: 'Apfelsaftschorle',   icon: '🍎', categoryId: softId, price: 200, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 1, lastModified: now },
+    { name: 'Wasser',             icon: '💧', categoryId: softId, price: 200, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 2, lastModified: now },
+    { name: 'Weinschorle',        icon: '🥂', categoryId: weinId, price: 350, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0, lastModified: now },
+    { name: 'Weiß-/Rot-/Rosé',   icon: '🍷', categoryId: weinId, price: 450, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 1, lastModified: now },
   ])
 }
 

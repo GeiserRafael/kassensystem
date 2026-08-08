@@ -81,31 +81,50 @@ export async function deleteCategoryFromFirestore(id: number): Promise<void> {
   await deleteDoc(doc(firestore, 'categories', String(id)))
 }
 
-// --- Live-Listener: beim ersten Aufruf initialer Pull + danach live Updates ---
-// Firestore gewinnt immer, kein separater pullCatalog nötig
+// --- Live-Listener: erster Snapshot = vollständiger Ersatz, danach inkrementell ---
 
 export function subscribeToProductChanges(): Unsubscribe {
   if (!firestore) return () => {}
 
-  // onSnapshot macht beim ersten Aufruf automatisch einen vollständigen Pull
+  let productsReady = false
+  let categoriesReady = false
+
   const unsub1 = onSnapshot(collection(firestore, 'products'), async (snap) => {
-    for (const change of snap.docChanges()) {
-      const remote = change.doc.data() as Product
-      if (change.type === 'removed') {
-        await db.products.delete(remote.id!)
-      } else {
-        await db.products.put(remote)
+    if (!productsReady) {
+      productsReady = true
+      const prods = snap.docs.map((d) => d.data() as Product)
+      if (prods.length > 0) {
+        await db.products.clear()
+        await db.products.bulkAdd(prods)
+      }
+    } else {
+      for (const change of snap.docChanges()) {
+        const remote = change.doc.data() as Product
+        if (change.type === 'removed') {
+          await db.products.delete(remote.id!)
+        } else {
+          await db.products.put(remote)
+        }
       }
     }
   })
 
   const unsub2 = onSnapshot(collection(firestore, 'categories'), async (snap) => {
-    for (const change of snap.docChanges()) {
-      const remote = change.doc.data() as Category
-      if (change.type === 'removed') {
-        await db.categories.delete(remote.id!)
-      } else {
-        await db.categories.put(remote)
+    if (!categoriesReady) {
+      categoriesReady = true
+      const cats = snap.docs.map((d) => d.data() as Category)
+      if (cats.length > 0) {
+        await db.categories.clear()
+        await db.categories.bulkAdd(cats)
+      }
+    } else {
+      for (const change of snap.docChanges()) {
+        const remote = change.doc.data() as Category
+        if (change.type === 'removed') {
+          await db.categories.delete(remote.id!)
+        } else {
+          await db.categories.put(remote)
+        }
       }
     }
   })
