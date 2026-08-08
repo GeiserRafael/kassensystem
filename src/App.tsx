@@ -3,6 +3,7 @@ import { SaleView } from './components/sale/SaleView'
 import { SettingsView } from './components/settings/SettingsView'
 import { syncSalesToFirestore, getLastSyncedAt } from './db/sync'
 import { ensureSignedIn } from './firebase'
+import { useDarkMode } from './hooks/useDarkMode'
 
 type Tab = 'sale' | 'settings'
 
@@ -11,6 +12,7 @@ export default function App() {
   const [online, setOnline] = useState(navigator.onLine)
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<string | null>(getLastSyncedAt())
+  const { dark, toggle: toggleDark } = useDarkMode()
 
   async function doSync() {
     if (!navigator.onLine || syncing) return
@@ -30,7 +32,6 @@ export default function App() {
     const onOffline = () => setOnline(false)
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
-    // Beim Start: anonym einloggen, dann sync versuchen
     ensureSignedIn().then(() => doSync())
     return () => {
       window.removeEventListener('online', onOnline)
@@ -45,14 +46,23 @@ export default function App() {
     : 'Noch nicht synchronisiert'
 
   return (
-    <div className="flex flex-col h-svh max-w-lg mx-auto">
+    <div className="flex flex-col h-svh max-w-lg mx-auto bg-white dark:bg-gray-900">
       {/* Sync-Status-Leiste */}
-      <div className={`flex items-center justify-between px-3 py-1 text-xs shrink-0 ${online ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+      <div className={`flex items-center justify-between px-3 py-1 text-xs shrink-0 ${
+        online
+          ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
+          : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400'
+      }`}>
         <span>{online ? '● Online' : '○ Offline'}</span>
         <span>{syncLabel}</span>
-        {online && !syncing && (
-          <button onClick={doSync} className="underline">Jetzt sync</button>
-        )}
+        <div className="flex items-center gap-2">
+          {online && !syncing && (
+            <button onClick={doSync} className="underline">Jetzt sync</button>
+          )}
+          <button onClick={toggleDark} className="text-base" title="Dark Mode umschalten">
+            {dark ? '☀️' : '🌙'}
+          </button>
+        </div>
       </div>
 
       <main className="flex-1 overflow-hidden">
@@ -61,11 +71,11 @@ export default function App() {
       </main>
 
       {/* Bottom nav */}
-      <nav className="flex bg-white border-t border-gray-200 shrink-0">
+      <nav className="flex bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shrink-0">
         <button
           onClick={() => setTab('sale')}
           className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-            tab === 'sale' ? 'text-green-600' : 'text-gray-400'
+            tab === 'sale' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
           }`}
         >
           <span className="text-2xl">🛒</span>
@@ -74,7 +84,7 @@ export default function App() {
         <button
           onClick={() => setTab('settings')}
           className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-            tab === 'settings' ? 'text-green-600' : 'text-gray-400'
+            tab === 'settings' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
           }`}
         >
           <span className="text-2xl">⚙️</span>
