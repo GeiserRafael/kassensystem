@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { SaleView } from './components/sale/SaleView'
 import { SettingsView } from './components/settings/SettingsView'
 import { syncSalesToFirestore, getLastSyncedAt } from './db/sync'
+import { ensureSignedIn } from './firebase'
 
 type Tab = 'sale' | 'settings'
 
@@ -29,8 +30,8 @@ export default function App() {
     const onOffline = () => setOnline(false)
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
-    // Beim Start direkt sync versuchen
-    doSync()
+    // Beim Start: anonym einloggen, dann sync versuchen
+    ensureSignedIn().then(() => doSync())
     return () => {
       window.removeEventListener('online', onOnline)
       window.removeEventListener('offline', onOffline)

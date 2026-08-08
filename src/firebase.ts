@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -15,3 +15,17 @@ const app = initializeApp(firebaseConfig)
 
 export const firestore = getFirestore(app)
 export const auth = getAuth(app)
+
+// Anonymes Login beim App-Start — gibt jedem Gerät eine Firebase-UID
+export function ensureSignedIn(): Promise<string> {
+  return new Promise((resolve) => {
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        resolve(user.uid)
+      } else {
+        const cred = await signInAnonymously(auth)
+        resolve(cred.user.uid)
+      }
+    })
+  })
+}
