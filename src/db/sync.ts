@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore'
 import { firestore } from '../firebase'
 import { db } from './db'
-import type { Category, Product } from './types'
+import type { Category, Product, Sale } from './types'
 
 const SYNC_KEY = 'lastSyncedAt'
 
@@ -26,6 +26,20 @@ function centToEuro(obj: Record<string, unknown>): Record<string, unknown> {
       if (priceFields.has(k) && typeof v === 'number') return [k, v / 100]
       if (k === 'lineItems' && Array.isArray(v)) {
         return [k, v.map((item: Record<string, unknown>) => centToEuro(item))]
+      }
+      return [k, v]
+    })
+  )
+}
+
+// Euro → Cent für lokale Dexie-Speicherung
+function euroToCent(obj: Record<string, unknown>): Record<string, unknown> {
+  const priceFields = new Set(['unitPrice', 'lineTotal', 'total', 'given', 'change', 'price'])
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => {
+      if (priceFields.has(k) && typeof v === 'number') return [k, Math.round(v * 100)]
+      if (k === 'lineItems' && Array.isArray(v)) {
+        return [k, v.map((item: Record<string, unknown>) => euroToCent(item))]
       }
       return [k, v]
     })
@@ -134,4 +148,38 @@ export function subscribeToProductChanges(): Unsubscribe {
 
 export function getLastSyncedAt(): string | null {
   return localStorage.getItem(SYNC_KEY)
+}
+
+// --- Sales Live-Listener: alle Sales aller User für Analyse ---
+
+export function subscribeToSalesChanges(): Unsubscribe {
+  if (!firestore) return () => {}
+
+  let ready = false
+
+  return onSnapshot(collection(firestore, 'sales'), async (snap) => {
+    if (!ready) {
+      ready = true
+      const remoteSales = snap.docs.map((d) => {
+        const raw = euroToCent(d.data() as Record<string, unknown>)
+        return { ...raw, id: d.id, synced: true } as Sale
+      })
+      // Nur fremde Sales einfügen (eigene behalten ihren lokalen Stand)
+      const localIds = new Set(await db.sales.toCollection().primaryKeys())
+      const newSales = remoteSales.filter((s) => !localIds.has(s.id!))
+      if (newSales.length > 0) await db.sales.bulkAdd(newSales)
+    } else {
+      for (const change of snap.docChanges()) {
+        const raw = euroToCent(change.doc.data() as Record<string, unknown>)
+        const sale = { ...raw, id: change.doc.id, synced: true } as Sale
+        if (change.type === 'removed') {
+          await db.sales.delete(sale.id!)
+        } else {
+          // put überschreibt nur wenn remote — eigene (synced=false) nicht anfassen
+          const local = await db.sales.get(sale.id!)
+          if (!local || local.synced) await db.sales.put(sale)
+        }
+      }
+    }
+  })
 }

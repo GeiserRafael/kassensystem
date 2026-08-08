@@ -3,7 +3,7 @@ import { SaleView } from './components/sale/SaleView'
 import { SettingsView } from './components/settings/SettingsView'
 import { AnalyseView } from './components/analyse/AnalyseView'
 import { UserNamePrompt } from './components/UserNamePrompt'
-import { syncSalesToFirestore, getLastSyncedAt, subscribeToProductChanges } from './db/sync'
+import { syncSalesToFirestore, getLastSyncedAt, subscribeToProductChanges, subscribeToSalesChanges } from './db/sync'
 import { ensureSignedIn, firebaseReady } from './firebase'
 import { useDarkMode } from './hooks/useDarkMode'
 
@@ -43,7 +43,8 @@ export default function App() {
       .then(() => {
         setFbStatus('connected')
         doSync()
-        return subscribeToProductChanges()
+        subscribeToProductChanges()
+        subscribeToSalesChanges()
       })
       .catch((e) => { console.warn('Auth fehlgeschlagen:', e); setFbStatus('error') })
     return () => {
