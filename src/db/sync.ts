@@ -19,6 +19,20 @@ function clean<T extends object>(obj: T): Record<string, unknown> {
   )
 }
 
+// Preisfelder von Cent → Euro für bessere Lesbarkeit in Firestore
+function centToEuro(obj: Record<string, unknown>): Record<string, unknown> {
+  const priceFields = new Set(['unitPrice', 'lineTotal', 'total', 'given', 'change', 'price'])
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => {
+      if (priceFields.has(k) && typeof v === 'number') return [k, v / 100]
+      if (k === 'lineItems' && Array.isArray(v)) {
+        return [k, v.map((item: Record<string, unknown>) => centToEuro(item))]
+      }
+      return [k, v]
+    })
+  )
+}
+
 // --- Sales ---
 
 export async function syncSalesToFirestore(): Promise<number> {
@@ -30,7 +44,7 @@ export async function syncSalesToFirestore(): Promise<number> {
   const batch = writeBatch(firestore)
   for (const sale of unsyncedSales) {
     batch.set(doc(firestore, 'sales', sale.id!), {
-      ...clean(sale),
+      ...centToEuro(clean(sale)),
       syncedAt: serverTimestamp(),
     })
   }
