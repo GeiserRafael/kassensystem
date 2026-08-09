@@ -28,6 +28,20 @@ export function SettingsView() {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null)
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null)
 
+  async function moveProduct(p: Product, dir: -1 | 1) {
+    const list = (products ?? []).filter((x) => x.categoryId === p.categoryId).sort((a, b) => a.sortOrder - b.sortOrder)
+    const idx = list.findIndex((x) => x.id === p.id)
+    const swapIdx = idx + dir
+    if (swapIdx < 0 || swapIdx >= list.length) return
+    const other = list[swapIdx]
+    const now = Date.now()
+    const updA = { ...p, sortOrder: other.sortOrder, lastModified: now }
+    const updB = { ...other, sortOrder: p.sortOrder, lastModified: now }
+    await db.products.bulkPut([updA, updB])
+    pushProductToFirestore(updA).catch(console.error)
+    pushProductToFirestore(updB).catch(console.error)
+  }
+
   function newProduct() {
     setEditingProduct({ name: '', icon: '🛍️', price: 0, categoryId: categories?.[0]?.id ?? 0, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0 })
   }
@@ -207,25 +221,44 @@ export function SettingsView() {
               </div>
             )}
 
-            {(products ?? []).length > 0 && (
-              <div className="mx-4 mt-3 rounded-2xl overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-sm mb-6">
-                {(products ?? []).map((p, i) => (
+            {(products ?? []).length > 0 && (categories ?? []).map((cat) => {
+              const catProds = (products ?? [])
+                .filter((p) => p.categoryId === cat.id)
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+              if (catProds.length === 0) return null
+              return (
+                <div key={cat.id} className="mx-4 mt-3 rounded-2xl overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-sm mb-1">
+                  <div className="px-4 py-2 flex items-center gap-2 border-b border-[#3c3c43]/8 dark:border-white/6">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                    <span className="text-[12px] font-semibold text-[#3c3c43]/60 dark:text-white/40 uppercase tracking-wide">{cat.name}</span>
+                  </div>
+                  {catProds.map((p, i) => (
                   <div key={p.id}>
                     {i > 0 && <div className="h-px bg-[#3c3c43]/10 dark:bg-white/8 ml-4" />}
-                    <div className={`px-4 py-3 flex items-center gap-3 ${!p.isActive ? 'opacity-45' : ''}`}>
-                      <span className="text-2xl">{p.icon}</span>
+                    <div className={`px-3 py-2.5 flex items-center gap-2 ${!p.isActive ? 'opacity-45' : ''}`}>
+                      {/* Sort buttons */}
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button
+                          onClick={() => moveProduct(p, -1)}
+                          disabled={i === 0}
+                          className="w-6 h-6 rounded-md bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43] dark:text-white/70 text-[12px] flex items-center justify-center disabled:opacity-20 active:opacity-60"
+                        >↑</button>
+                        <button
+                          onClick={() => moveProduct(p, 1)}
+                          disabled={i === catProds.length - 1}
+                          className="w-6 h-6 rounded-md bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43] dark:text-white/70 text-[12px] flex items-center justify-center disabled:opacity-20 active:opacity-60"
+                        >↓</button>
+                      </div>
+                      <span className="text-xl shrink-0">{p.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="text-[15px] font-medium text-[#1c1c1e] dark:text-white truncate">{p.name}</div>
-                        <div className="flex items-center gap-1.5 text-[12px] text-[#3c3c43]/50 dark:text-white/35">
-                          <span className="w-2 h-2 rounded-full inline-block shrink-0" style={{ backgroundColor: catColor(p.categoryId) }} />
-                          {catName(p.categoryId)} · {formatCent(p.price)}
-                        </div>
+                        <div className="text-[12px] text-[#3c3c43]/50 dark:text-white/35">{formatCent(p.price)}</div>
                       </div>
-                      <div className="flex gap-1.5 items-center">
-                        <button onClick={() => toggleFavorite(p)} className={`text-lg transition-opacity ${p.isFavorite ? 'opacity-100' : 'opacity-25'}`}>⭐</button>
+                      <div className="flex gap-1 items-center">
+                        <button onClick={() => toggleFavorite(p)} className={`text-base transition-opacity ${p.isFavorite ? 'opacity-100' : 'opacity-20'}`}>⭐</button>
                         <button
                           onClick={() => toggleSoldOut(p)}
-                          className={`text-[12px] px-2.5 py-1 rounded-lg font-semibold ${
+                          className={`text-[11px] px-2 py-1 rounded-lg font-semibold ${
                             p.isSoldOut
                               ? 'bg-[#ff3b30]/15 text-[#ff3b30] dark:bg-[#ff453a]/20 dark:text-[#ff453a]'
                               : 'bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43] dark:text-white/70'
@@ -233,27 +266,28 @@ export function SettingsView() {
                         >{p.isSoldOut ? 'Aus' : 'OK'}</button>
                         <button
                           onClick={() => toggleActive(p)}
-                          className={`text-[12px] px-2.5 py-1 rounded-lg font-semibold ${
+                          className={`text-[11px] px-2 py-1 rounded-lg font-semibold ${
                             p.isActive
                               ? 'bg-[#34c759]/15 text-[#34c759] dark:bg-[#30d158]/20 dark:text-[#30d158]'
                               : 'bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43]/50 dark:text-white/30'
                           }`}
                         >{p.isActive ? 'Aktiv' : 'Inaktiv'}</button>
-                        <button onClick={() => setEditingProduct(p)} className="text-[#007aff] dark:text-[#0a84ff] px-1 text-[15px]">✏️</button>
+                        <button onClick={() => setEditingProduct(p)} className="text-[#007aff] dark:text-[#0a84ff] px-1 text-[14px]">✏️</button>
                         <button
                           onClick={async () => {
                             if (!confirm(`"${p.name}" löschen?`)) return
                             await db.products.delete(p.id!)
                             deleteProductFromFirestore(p.id!).catch(console.error)
                           }}
-                          className="text-[#ff3b30] dark:text-[#ff453a] px-1 text-[15px]"
+                          className="text-[#ff3b30] dark:text-[#ff453a] px-1 text-[14px]"
                         >🗑️</button>
                       </div>
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
+                </div>
+              )
+            })}
           </>
         )}
 
