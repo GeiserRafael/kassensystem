@@ -150,7 +150,24 @@ export function getLastSyncedAt(): string | null {
   return localStorage.getItem(SYNC_KEY)
 }
 
-// --- Sales Live-Listener: alle Sales aller User für Analyse ---
+// --- Admin: alle Sales löschen (lokal + Firestore) ---
+
+export async function deleteAllSales(): Promise<void> {
+  // Lokal löschen
+  await db.sales.clear()
+
+  if (!firestore) return
+
+  // Firestore: alle Docs in 'sales' in Batches löschen
+  const { getDocs, deleteDoc } = await import('firebase/firestore')
+  const snap = await getDocs(collection(firestore, 'sales'))
+  const BATCH_SIZE = 400
+  for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
+    const batch = writeBatch(firestore)
+    snap.docs.slice(i, i + BATCH_SIZE).forEach((d) => batch.delete(d.ref))
+    await batch.commit()
+  }
+}
 
 export function subscribeToSalesChanges(): Unsubscribe {
   if (!firestore) return () => {}

@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/db'
 import type { Category, Product } from '../../db/types'
 import { formatCent } from '../../utils'
-import { pushProductToFirestore, pushCategoryToFirestore, deleteCategoryFromFirestore } from '../../db/sync'
+import { pushProductToFirestore, pushCategoryToFirestore, deleteCategoryFromFirestore, deleteAllSales } from '../../db/sync'
 
 const CATEGORY_COLORS = ['#007aff', '#ff9500', '#34c759', '#af52de', '#ff3b30', '#ffcc00', '#5ac8fa', '#ff2d55']
 
@@ -16,8 +16,11 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 export function SettingsView() {
-  const [tab, setTab] = useState<'products' | 'categories' | 'user'>('products')
+  const [tab, setTab] = useState<'products' | 'categories' | 'user' | 'admin'>('products')
   const [userName, setUserName] = useState(localStorage.getItem('userName') ?? '')
+  const [adminUnlocked, setAdminUnlocked] = useState(false)
+  const [adminPw, setAdminPw] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const categories = useLiveQuery(() => db.categories.orderBy('sortOrder').toArray())
   const products = useLiveQuery(() => db.products.orderBy('sortOrder').toArray())
@@ -99,6 +102,21 @@ export function SettingsView() {
     alert('Gespeichert!')
   }
 
+  async function handleAdminReset() {
+    if (!confirm('Alle Verkäufe und Benutzerdaten unwiderruflich löschen?')) return
+    setDeleting(true)
+    try {
+      await deleteAllSales()
+      localStorage.removeItem('userName')
+      alert('Datenbank zurückgesetzt.')
+    } catch (e) {
+      console.error(e)
+      alert('Fehler beim Zurücksetzen.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const catName = (id: number) => categories?.find((c) => c.id === id)?.name ?? '—'
   const catColor = (id: number) => categories?.find((c) => c.id === id)?.color ?? '#9ca3af'
 
@@ -107,17 +125,17 @@ export function SettingsView() {
       {/* iOS Segmented Control */}
       <div className="px-4 pt-3 pb-2 shrink-0">
         <div className="flex bg-[#e5e5ea] dark:bg-white/10 rounded-xl p-0.5">
-          {(['products', 'categories', 'user'] as const).map((t) => (
+          {(['products', 'categories', 'user', 'admin'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-1.5 rounded-[10px] text-[13px] font-semibold transition-all ${
+              className={`flex-1 py-1.5 rounded-[10px] text-[12px] font-semibold transition-all ${
                 tab === t
                   ? 'bg-white dark:bg-[#2c2c2e] text-[#1c1c1e] dark:text-white shadow-sm'
                   : 'text-[#3c3c43]/60 dark:text-white/40'
               }`}
             >
-              {t === 'products' ? 'Produkte' : t === 'categories' ? 'Kategorien' : 'Benutzer'}
+              {t === 'products' ? 'Produkte' : t === 'categories' ? 'Kategorien' : t === 'user' ? 'Benutzer' : '🔒'}
             </button>
           ))}
         </div>
@@ -313,6 +331,63 @@ export function SettingsView() {
               >
                 Speichern
               </button>
+            </div>
+          </>
+        )}
+        {/* ADMIN tab */}
+        {tab === 'admin' && (
+          <>
+            <SectionHeader title="Admin" />
+            <div className="mx-4 rounded-2xl bg-white dark:bg-[#1c1c1e] shadow-sm p-4 space-y-3 mb-6">
+              {!adminUnlocked ? (
+                <>
+                  <p className="text-[15px] text-[#3c3c43] dark:text-white/70">Admin-Passwort eingeben</p>
+                  <input
+                    type="password"
+                    value={adminPw}
+                    onChange={(e) => setAdminPw(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (adminPw === '1234') { setAdminUnlocked(true); setAdminPw('') }
+                        else { alert('Falsches Passwort'); setAdminPw('') }
+                      }
+                    }}
+                    placeholder="••••"
+                    className="w-full bg-[#f2f2f7] dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-[17px] text-center tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-[#007aff]"
+                  />
+                  <button
+                    onClick={() => {
+                      if (adminPw === '1234') { setAdminUnlocked(true); setAdminPw('') }
+                      else { alert('Falsches Passwort'); setAdminPw('') }
+                    }}
+                    className="w-full py-3 rounded-xl bg-[#007aff] dark:bg-[#0a84ff] text-white font-semibold text-[17px] active:opacity-80"
+                  >
+                    Entsperren
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 pb-1">
+                    <span className="text-[13px] font-semibold text-[#34c759] dark:text-[#30d158] uppercase tracking-wide">Admin entsperrt</span>
+                  </div>
+                  <p className="text-[13px] text-[#3c3c43]/60 dark:text-white/40">
+                    Löscht alle Verkäufe lokal und in der Cloud. Produkte und Kategorien bleiben erhalten.
+                  </p>
+                  <button
+                    onClick={handleAdminReset}
+                    disabled={deleting}
+                    className="w-full py-3 rounded-xl bg-[#ff3b30] dark:bg-[#ff453a] text-white font-semibold text-[17px] active:opacity-80 disabled:opacity-40"
+                  >
+                    {deleting ? 'Wird gelöscht…' : '🗑️ Alle Verkäufe löschen'}
+                  </button>
+                  <button
+                    onClick={() => setAdminUnlocked(false)}
+                    className="w-full py-2.5 rounded-xl bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43] dark:text-white/70 font-semibold text-[15px] active:opacity-60"
+                  >
+                    Sperren
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}
