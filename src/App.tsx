@@ -148,11 +148,13 @@ export default function App() {
               </button>
             ))}
           </nav>
-          {/* Safe area fill — extends Tab Bar background into home indicator zone */}
+          {/* Safe area fill */}
           <div
             className="shrink-0"
             style={{
               height: 'env(safe-area-inset-bottom)',
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
               background: 'var(--lg-bar-bg)',
             }}
           />

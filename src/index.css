@@ -15,7 +15,12 @@ body {
   background-color: #f2f2f7;
 }
 
-.dark body {
+html {
+  background-color: #f2f2f7;
+}
+
+.dark body,
+.dark html {
   background-color: #000000;
 }
 
