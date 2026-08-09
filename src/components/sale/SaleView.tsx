@@ -176,11 +176,11 @@ export function SaleView() {
           <div className="flex gap-2 items-center">
             <span className="text-[15px] text-[#3c3c43]/55 dark:text-white/40 shrink-0">Gegeben</span>
             <input
-              type="number"
+              type="text"
               inputMode="decimal"
               placeholder="0,00"
               value={given}
-              onChange={(e) => setGiven(e.target.value)}
+              onChange={(e) => setGiven(e.target.value.replace('.', ','))}
               className="flex-1 rounded-2xl px-3 py-2 text-right text-[17px] font-semibold focus:outline-none focus:ring-2 focus:ring-[#007aff] text-[#1c1c1e] dark:text-white"
               style={{ background: 'var(--lg-input-bg)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
             />
@@ -196,15 +196,18 @@ export function SaleView() {
             {QUICK_AMOUNTS.map((amt) => (
               <button
                 key={amt}
-                onClick={() => setGiven((amt / 100).toFixed(2))}
+                onClick={() => {
+                  const current = Math.round(parseFloat(given.replace(',', '.')) * 100) || 0
+                  setGiven(((current + amt) / 100).toFixed(2).replace('.', ','))
+                }}
                 className="flex-1 py-2 rounded-2xl text-[#1c1c1e] dark:text-white text-[13px] font-semibold active:scale-95 transition-transform"
                 style={{ background: 'var(--lg-btn-bg)' }}
               >
-                {formatCent(amt).replace(' €', '€')}
+                +{formatCent(amt).replace(' €', '€')}
               </button>
             ))}
             <button
-              onClick={() => setGiven((total / 100).toFixed(2))}
+              onClick={() => setGiven((total / 100).toFixed(2).replace('.', ','))}
               className="flex-1 py-2 rounded-2xl text-[#007aff] dark:text-[#0a84ff] text-[13px] font-semibold active:scale-95 transition-transform"
               style={{ background: 'var(--lg-btn-primary-bg)' }}
             >
