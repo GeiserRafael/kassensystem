@@ -131,9 +131,6 @@ export function SettingsView() {
     }
   }
 
-  const catName = (id: number) => categories?.find((c) => c.id === id)?.name ?? '—'
-  const catColor = (id: number) => categories?.find((c) => c.id === id)?.color ?? '#9ca3af'
-
   return (
     <div className="flex flex-col h-full bg-[#f2f2f7] dark:bg-black">
       {/* iOS Segmented Control */}
