@@ -1,8 +1,17 @@
+export interface Tab {
+  id?: number
+  name: string
+  sortOrder: number
+  color: string
+  lastModified: number
+}
+
 export interface Category {
   id?: number
   name: string
   sortOrder: number
   color: string
+  tabId?: number
   lastModified: number
 }
 

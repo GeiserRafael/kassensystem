@@ -12,6 +12,7 @@ const QUICK_AMOUNTS = [5_00, 10_00, 20_00, 50_00]
 export function SaleView() {
   const [given, setGiven] = useState('')
   const [paid, setPaid] = useState(false)
+  const [activeTabId, setActiveTabId] = useState<number | null>(null)
 
   const items = useCartStore((s) => s.items)
   const addProduct = useCartStore((s) => s.addProduct)
@@ -23,18 +24,36 @@ export function SaleView() {
   const givenCent = Math.round(parseFloat(given.replace(',', '.')) * 100) || 0
   const change = givenCent - total
 
+  const tabs = useLiveQuery(() => db.tabs.orderBy('sortOrder').toArray())
   const categories = useLiveQuery(() => db.categories.orderBy('sortOrder').toArray())
-
   const products = useLiveQuery(async () => {
     const all = await db.products.toArray()
     return all.filter((p) => p.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
   })
 
+  // Tabs die mindestens ein aktives Produkt haben
+  const activeTabs = useLiveQuery(async () => {
+    if (!tabs || !categories || !products) return []
+    const catIdsWithProducts = new Set(products.map((p) => p.categoryId))
+    const tabIdsWithProducts = new Set(
+      (categories as Category[])
+        .filter((c) => catIdsWithProducts.has(c.id!))
+        .map((c) => c.tabId)
+    )
+    return tabs.filter((t) => tabIdsWithProducts.has(t.id))
+  }, [tabs, categories, products])
+
+  // Aktiver Tab — nimm den ersten wenn noch keiner gewählt
+  const resolvedTabId = activeTabId ?? activeTabs?.[0]?.id ?? null
+
+  // Kategorien im aktiven Tab mit ihren Produkten
   const activeCatsWithProducts = useLiveQuery(async () => {
-    if (!products || !categories) return []
-    const catIds = new Set(products.map((p) => p.categoryId))
-    return (categories as Category[]).filter((c) => catIds.has(c.id!))
-  }, [products, categories])
+    if (!products || !categories || resolvedTabId === null) return []
+    const catIdsWithProducts = new Set(products.map((p) => p.categoryId))
+    return (categories as Category[]).filter(
+      (c) => c.tabId === resolvedTabId && catIdsWithProducts.has(c.id!)
+    )
+  }, [products, categories, resolvedTabId])
 
   async function handlePay() {
     if (items.length === 0) return
@@ -58,6 +77,29 @@ export function SaleView() {
 
   return (
     <div className="flex flex-col h-full bg-[#f2f2f7] dark:bg-black">
+
+      {/* Tab bar — horizontal scrollable */}
+      {(activeTabs ?? []).length > 1 && (
+        <div className="shrink-0 flex gap-2 px-4 pt-3 pb-2 overflow-x-auto">
+          {(activeTabs ?? []).map((t) => {
+            const isActive = t.id === resolvedTabId
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTabId(t.id!)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-[14px] font-semibold transition-all active:opacity-60 ${
+                  isActive
+                    ? 'bg-[#1c1c1e] dark:bg-white text-white dark:text-black'
+                    : 'bg-white dark:bg-white/10 text-[#3c3c43] dark:text-white/70'
+                }`}
+                style={isActive ? {} : { boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}
+              >
+                {t.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Scrollable product list grouped by category */}
       <div className="flex-1 min-h-0 overflow-y-auto">

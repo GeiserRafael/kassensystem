@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore'
 import { firestore } from '../firebase'
 import { db } from './db'
-import type { Category, Product, Sale } from './types'
+import type { Tab, Category, Product, Sale } from './types'
 
 const SYNC_KEY = 'lastSyncedAt'
 
@@ -69,6 +69,22 @@ export async function syncSalesToFirestore(): Promise<number> {
 
 // --- Katalog hochladen (ein Produkt/Kategorie nach Änderung) ---
 
+export async function pushTabToFirestore(tab: Tab): Promise<void> {
+  if (!firestore || !tab.id) return
+  await writeBatch(firestore)
+    .set(doc(firestore, 'tabs', String(tab.id)), {
+      ...clean(tab),
+      lastModified: Date.now(),
+    })
+    .commit()
+}
+
+export async function deleteTabFromFirestore(id: number): Promise<void> {
+  if (!firestore) return
+  const { deleteDoc } = await import('firebase/firestore')
+  await deleteDoc(doc(firestore, 'tabs', String(id)))
+}
+
 export async function pushProductToFirestore(product: Product): Promise<void> {
   if (!firestore || !product.id) return
   await writeBatch(firestore)
@@ -106,8 +122,29 @@ export async function deleteCategoryFromFirestore(id: number): Promise<void> {
 export function subscribeToProductChanges(): Unsubscribe {
   if (!firestore) return () => {}
 
+  let tabsReady = false
   let productsReady = false
   let categoriesReady = false
+
+  const unsub0 = onSnapshot(collection(firestore, 'tabs'), async (snap) => {
+    if (!tabsReady) {
+      tabsReady = true
+      const tabs = snap.docs.map((d) => ({ ...(d.data() as Tab), id: Number(d.id) }))
+      if (tabs.length > 0) {
+        await db.tabs.clear()
+        await db.tabs.bulkAdd(tabs)
+      }
+    } else {
+      for (const change of snap.docChanges()) {
+        const remote = { ...(change.doc.data() as Tab), id: Number(change.doc.id) }
+        if (change.type === 'removed') {
+          await db.tabs.delete(remote.id!)
+        } else {
+          await db.tabs.put(remote)
+        }
+      }
+    }
+  })
 
   const unsub1 = onSnapshot(collection(firestore, 'products'), async (snap) => {
     if (!productsReady) {
@@ -149,7 +186,7 @@ export function subscribeToProductChanges(): Unsubscribe {
     }
   })
 
-  return () => { unsub1(); unsub2() }
+  return () => { unsub0(); unsub1(); unsub2() }
 }
 
 export function getLastSyncedAt(): string | null {
