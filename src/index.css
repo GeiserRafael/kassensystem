@@ -32,3 +32,20 @@ body {
 *::-webkit-scrollbar {
   display: none;
 }
+
+/* Dark mode Liquid Glass overrides */
+.dark .lg-card {
+  background: rgba(28,28,30,0.72) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.08) !important;
+}
+
+.dark .lg-panel {
+  background: rgba(28,28,30,0.85) !important;
+  border-top-color: rgba(255,255,255,0.08) !important;
+}
+
+.dark .lg-bar {
+  background: rgba(28,28,30,0.8) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}

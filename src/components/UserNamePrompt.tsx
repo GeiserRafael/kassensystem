@@ -21,16 +21,31 @@ export function UserNamePrompt({ onSave }: Props) {
     >
       <div className="w-full max-w-sm space-y-5">
         {/* Icon + title */}
-        <div className="text-center space-y-2">
-          <div className="w-20 h-20 rounded-[22px] bg-[#34c759] dark:bg-[#30d158] flex items-center justify-center text-4xl mx-auto shadow-lg">
+        <div className="text-center space-y-3">
+          <div
+            className="w-24 h-24 rounded-[28px] flex items-center justify-center text-5xl mx-auto"
+            style={{
+              background: 'linear-gradient(135deg, #34c759, #30d158)',
+              boxShadow: '0 8px 32px rgba(52,199,89,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
+            }}
+          >
             🛒
           </div>
-          <h1 className="text-[28px] font-bold text-[#1c1c1e] dark:text-white">Kasse</h1>
-          <p className="text-[15px] text-[#3c3c43]/60 dark:text-white/40">Gib deinen Namen ein um zu starten</p>
+          <h1 className="text-[32px] font-bold text-[#1c1c1e] dark:text-white tracking-tight">Kasse</h1>
+          <p className="text-[15px] text-[#3c3c43]/55 dark:text-white/40">Gib deinen Namen ein um zu starten</p>
         </div>
 
-        {/* Input card */}
-        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl shadow-sm overflow-hidden">
+        {/* Input — Liquid Glass */}
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            background: 'rgba(255,255,255,0.75)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.08), inset 0 0.5px 0 rgba(255,255,255,0.9)',
+            border: '0.5px solid rgba(255,255,255,0.6)',
+          }}
+        >
           <input
             autoFocus
             type="text"
@@ -42,11 +57,17 @@ export function UserNamePrompt({ onSave }: Props) {
           />
         </div>
 
-        {/* CTA */}
+        {/* CTA — Liquid Glass Green */}
         <button
           onClick={handleSave}
           disabled={!name.trim()}
-          className="w-full py-4 rounded-2xl bg-[#007aff] dark:bg-[#0a84ff] text-white font-semibold text-[17px] disabled:opacity-35 active:opacity-80 transition-opacity shadow-sm"
+          className="w-full py-4 rounded-2xl text-white font-semibold text-[17px] disabled:opacity-35 active:scale-[0.98] transition-transform"
+          style={{
+            background: 'linear-gradient(135deg, #34c759, #30d158)',
+            boxShadow: name.trim()
+              ? '0 4px 20px rgba(52,199,89,0.4), inset 0 1px 0 rgba(255,255,255,0.25)'
+              : 'none',
+          }}
         >
           Weiter
         </button>

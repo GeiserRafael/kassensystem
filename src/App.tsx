@@ -23,9 +23,9 @@ export default function App() {
     if (!navigator.onLine || syncing) return
     setSyncing(true)
     try {
-      const count = await syncSalesToFirestore()
+      await syncSalesToFirestore()
       setFbStatus('connected')
-      if (count > 0) setLastSync(new Date().toISOString())
+      setLastSync(new Date().toISOString())
     } catch (e) {
       console.error('Sync fehlgeschlagen:', e)
       setFbStatus('error')
@@ -56,21 +56,21 @@ export default function App() {
   const syncLabel = syncing
     ? 'Sync…'
     : lastSync
-    ? `${new Date(lastSync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
+    ? new Date(lastSync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
     : '—'
 
   const dbDot = !firebaseReady
     ? 'bg-gray-400'
     : fbStatus === 'connected'
-    ? 'bg-green-500'
+    ? 'bg-[#34c759]'
     : fbStatus === 'error'
-    ? 'bg-red-500'
+    ? 'bg-[#ff3b30]'
     : 'bg-yellow-400'
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'sale',     label: 'Verkauf',       icon: '🛒' },
-    { id: 'analyse',  label: 'Analyse',        icon: '📊' },
-    { id: 'settings', label: 'Einstellungen',  icon: '⚙️' },
+    { id: 'sale',     label: 'Verkauf',      icon: '🛒' },
+    { id: 'analyse',  label: 'Analyse',       icon: '📊' },
+    { id: 'settings', label: 'Einstellungen', icon: '⚙️' },
   ]
 
   return (
@@ -85,28 +85,35 @@ export default function App() {
             paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
-          {/* iOS-style compact status bar */}
-          <div className={`flex items-center justify-between px-4 py-1.5 text-[11px] font-medium shrink-0 ${
-            online
-              ? 'bg-[#f2f2f7]/80 dark:bg-black/80 text-[#3c3c43]/60 dark:text-white/40'
-              : 'bg-yellow-50 dark:bg-yellow-950/60 text-yellow-700 dark:text-yellow-400'
-          }`}
-          style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+          {/* Status bar — Liquid Glass */}
+          <div
+            className={`flex items-center justify-between px-4 py-2 text-[11px] font-medium shrink-0 ${
+              online
+                ? 'text-[#3c3c43]/70 dark:text-white/50'
+                : 'text-yellow-700 dark:text-yellow-400'
+            }`}
+            style={{
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+              backgroundColor: online
+                ? 'rgba(242,242,247,0.7)'
+                : 'rgba(254,252,232,0.8)',
+            }}
           >
             <div className="flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-green-500' : 'bg-yellow-400'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-[#34c759]' : 'bg-yellow-400'}`} />
               <span>{online ? 'Online' : 'Offline'}</span>
               <span className={`w-1.5 h-1.5 rounded-full ${dbDot}`} />
               <span>{!firebaseReady ? 'Lokal' : fbStatus === 'connected' ? 'Verbunden' : fbStatus === 'error' ? 'Fehler' : '…'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span>{syncLabel}</span>
+              <span className="tabular-nums">{syncLabel}</span>
               {online && !syncing && (
                 <button onClick={doSync} className="text-[#007aff] dark:text-[#0a84ff] font-semibold">Sync</button>
               )}
               <button onClick={toggleDark} className="text-sm">{dark ? '☀️' : '🌙'}</button>
               {localStorage.getItem('darkMode') !== null && (
-                <button onClick={resetToSystem} className="text-[10px] text-[#3c3c43]/50 dark:text-white/30 font-medium">Auto</button>
+                <button onClick={resetToSystem} className="text-[10px] text-[#3c3c43]/40 dark:text-white/25 font-medium">Auto</button>
               )}
             </div>
           </div>
@@ -118,22 +125,27 @@ export default function App() {
             {tab === 'analyse'  && <AnalyseView />}
           </main>
 
-          {/* iOS Tab Bar */}
+          {/* Tab Bar — Liquid Glass */}
           <nav
-            className="flex shrink-0 border-t border-[#3c3c43]/20 dark:border-white/10 bg-[#f2f2f7]/80 dark:bg-[#1c1c1e]/80"
-            style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+            className="flex shrink-0"
+            style={{
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+              backgroundColor: 'rgba(242,242,247,0.75)',
+              borderTop: '0.5px solid rgba(60,60,67,0.15)',
+            }}
           >
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex-1 flex flex-col items-center pt-2 pb-1 gap-0.5 transition-opacity active:opacity-60 ${
+                className={`flex-1 flex flex-col items-center pt-2 pb-1 gap-0.5 active:opacity-50 transition-all ${
                   tab === t.id
                     ? 'text-[#007aff] dark:text-[#0a84ff]'
-                    : 'text-[#3c3c43]/50 dark:text-white/35'
+                    : 'text-[#3c3c43]/45 dark:text-white/30'
                 }`}
               >
-                <span className="text-[22px] leading-none">{t.icon}</span>
+                <span className={`text-[22px] leading-none transition-transform ${tab === t.id ? 'scale-110' : 'scale-100'}`}>{t.icon}</span>
                 <span className="text-[10px] font-medium tracking-tight">{t.label}</span>
               </button>
             ))}
