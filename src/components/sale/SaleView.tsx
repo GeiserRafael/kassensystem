@@ -9,11 +9,7 @@ import type { Category } from '../../db/types'
 
 const QUICK_AMOUNTS = [5_00, 10_00, 20_00, 50_00]
 
-// Liquid Glass helper style
-const liquidGlass = {
-  backdropFilter: 'blur(40px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-}
+const blur = 'blur(40px) saturate(180%)'
 
 export function SaleView() {
   const [given, setGiven] = useState('')
@@ -81,11 +77,11 @@ export function SaleView() {
   return (
     <div className="flex flex-col h-full bg-[#f2f2f7] dark:bg-black">
 
-      {/* Tab pills — Liquid Glass */}
+      {/* Tab pills */}
       {(activeTabs ?? []).length > 1 && (
         <div
           className="shrink-0 flex gap-2 px-4 pt-3 pb-3 overflow-x-auto"
-          style={{ ...liquidGlass, backgroundColor: 'rgba(242,242,247,0.6)' }}
+          style={{ backdropFilter: blur, WebkitBackdropFilter: blur, background: 'var(--lg-bar-bg)' }}
         >
           {(activeTabs ?? []).map((t) => {
             const isActive = t.id === resolvedTabId
@@ -94,20 +90,15 @@ export function SaleView() {
                 key={t.id}
                 onClick={() => setActiveTabId(t.id!)}
                 className={`shrink-0 px-5 py-1.5 rounded-full text-[14px] font-semibold transition-all active:scale-95 ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-[#3c3c43]/70 dark:text-white/60'
+                  isActive ? 'text-white dark:text-[#1c1c1e]' : 'text-[#3c3c43]/70 dark:text-white/60'
                 }`}
-                style={isActive ? {
-                  background: 'rgba(28,28,30,0.85)',
+                style={{
+                  background: isActive ? 'var(--lg-pill-active-bg)' : 'var(--lg-pill-bg)',
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 0.5px 0 rgba(255,255,255,0.15)',
-                } : {
-                  background: 'rgba(255,255,255,0.6)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0.5px 0 rgba(255,255,255,0.8)',
+                  boxShadow: isActive
+                    ? '0 2px 8px rgba(0,0,0,0.2), inset 0 0.5px 0 rgba(255,255,255,0.15)'
+                    : 'var(--lg-pill-shadow)',
                 }}
               >
                 {t.name}
@@ -130,10 +121,7 @@ export function SaleView() {
                   {cat.name}
                 </span>
               </div>
-              <div
-                className="grid gap-3 px-4 pb-2"
-                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))' }}
-              >
+              <div className="grid gap-3 px-4 pb-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))' }}>
                 {catProducts.map((p) => (
                   <ProductButton key={p.id} product={p} />
                 ))}
@@ -144,16 +132,16 @@ export function SaleView() {
         <div className="h-3" />
       </div>
 
-      {/* Cart + payment panel — Liquid Glass */}
+      {/* Cart + payment panel */}
       <div
         className="shrink-0"
         style={{
-          ...liquidGlass,
-          backgroundColor: 'rgba(255,255,255,0.75)',
-          borderTop: '0.5px solid rgba(60,60,67,0.12)',
+          backdropFilter: blur,
+          WebkitBackdropFilter: blur,
+          background: 'var(--lg-panel-bg)',
+          borderTop: '0.5px solid var(--lg-panel-border)',
         }}
       >
-        {/* Cart items */}
         {items.length > 0 && (
           <div className="px-4 pt-3 space-y-1.5 max-h-36 overflow-y-auto">
             {items.map((item) => (
@@ -163,12 +151,14 @@ export function SaleView() {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => removeOne(item.productId)}
-                    className="w-7 h-7 rounded-full bg-[#ff3b30]/12 text-[#ff3b30] dark:text-[#ff453a] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+                    className="w-7 h-7 rounded-full text-[#ff3b30] dark:text-[#ff453a] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+                    style={{ background: 'var(--lg-btn-danger-bg)' }}
                   >−</button>
                   <span className="w-5 text-center text-[15px] font-semibold text-[#1c1c1e] dark:text-white">{item.qty}</span>
                   <button
                     onClick={() => addProduct({ id: item.productId, name: item.name, icon: item.icon, price: item.unitPrice, categoryId: 0, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0, lastModified: 0 })}
-                    className="w-7 h-7 rounded-full bg-[#34c759]/12 text-[#34c759] dark:text-[#30d158] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+                    className="w-7 h-7 rounded-full text-[#34c759] dark:text-[#30d158] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+                    style={{ background: 'rgba(52,199,89,0.12)' }}
                   >+</button>
                 </div>
                 <span className="text-[14px] font-medium w-16 text-right text-[#3c3c43] dark:text-white/70">{formatCent(item.lineTotal)}</span>
@@ -178,13 +168,11 @@ export function SaleView() {
         )}
 
         <div className="px-4 pt-3 pb-4 space-y-3">
-          {/* Total */}
           <div className="flex justify-between items-baseline">
             <span className="text-[17px] font-semibold text-[#3c3c43]/60 dark:text-white/50">Gesamt</span>
             <span className="text-[36px] font-bold tracking-tight text-[#1c1c1e] dark:text-white">{formatCent(total)}</span>
           </div>
 
-          {/* Given + change */}
           <div className="flex gap-2 items-center">
             <span className="text-[15px] text-[#3c3c43]/55 dark:text-white/40 shrink-0">Gegeben</span>
             <input
@@ -194,11 +182,7 @@ export function SaleView() {
               value={given}
               onChange={(e) => setGiven(e.target.value)}
               className="flex-1 rounded-2xl px-3 py-2 text-right text-[17px] font-semibold focus:outline-none focus:ring-2 focus:ring-[#007aff] text-[#1c1c1e] dark:text-white"
-              style={{
-                background: 'rgba(120,120,128,0.12)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-              }}
+              style={{ background: 'var(--lg-input-bg)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
             />
             {givenCent >= total && total > 0 && (
               <div className="text-right shrink-0">
@@ -208,18 +192,13 @@ export function SaleView() {
             )}
           </div>
 
-          {/* Quick amounts */}
           <div className="flex gap-2">
             {QUICK_AMOUNTS.map((amt) => (
               <button
                 key={amt}
                 onClick={() => setGiven((amt / 100).toFixed(2))}
                 className="flex-1 py-2 rounded-2xl text-[#1c1c1e] dark:text-white text-[13px] font-semibold active:scale-95 transition-transform"
-                style={{
-                  background: 'rgba(120,120,128,0.12)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                }}
+                style={{ background: 'var(--lg-btn-bg)' }}
               >
                 {formatCent(amt).replace(' €', '€')}
               </button>
@@ -227,38 +206,31 @@ export function SaleView() {
             <button
               onClick={() => setGiven((total / 100).toFixed(2))}
               className="flex-1 py-2 rounded-2xl text-[#007aff] dark:text-[#0a84ff] text-[13px] font-semibold active:scale-95 transition-transform"
-              style={{
-                background: 'rgba(0,122,255,0.1)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-              }}
+              style={{ background: 'var(--lg-btn-primary-bg)' }}
             >
               Passend
             </button>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2">
             <button
               onClick={() => { if (items.length > 0 && confirm('Kauf zurücksetzen?')) { clear(); setGiven('') } }}
               disabled={items.length === 0}
               className="px-4 py-3.5 rounded-2xl text-[#ff3b30] dark:text-[#ff453a] text-[17px] font-semibold disabled:opacity-25 active:scale-95 transition-transform"
-              style={{ background: 'rgba(255,59,48,0.1)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+              style={{ background: 'var(--lg-btn-danger-bg)' }}
             >🗑️</button>
             <button
               onClick={removeLastAdded}
               disabled={items.length === 0}
               className="px-4 py-3.5 rounded-2xl text-[#3c3c43] dark:text-white/70 text-[17px] font-semibold disabled:opacity-25 active:scale-95 transition-transform"
-              style={{ background: 'rgba(120,120,128,0.12)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+              style={{ background: 'var(--lg-btn-bg)' }}
             >↩</button>
             <button
               onClick={handlePay}
               disabled={items.length === 0}
               className="flex-1 py-3.5 rounded-2xl text-white text-[17px] font-bold active:scale-[0.98] disabled:opacity-30 transition-transform"
               style={{
-                background: items.length > 0
-                  ? 'linear-gradient(135deg, #34c759, #30d158)'
-                  : 'rgba(52,199,89,0.4)',
+                background: 'linear-gradient(135deg, #34c759, #30d158)',
                 boxShadow: items.length > 0 ? '0 4px 16px rgba(52,199,89,0.35), inset 0 1px 0 rgba(255,255,255,0.25)' : 'none',
               }}
             >

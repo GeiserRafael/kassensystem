@@ -22,20 +22,17 @@ export function ProductButton({ product }: Props) {
         ${product.isSoldOut ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
       `}
       style={{
-        background: 'rgba(255,255,255,0.72)',
+        background: 'var(--lg-card-bg)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06), inset 0 0.5px 0 rgba(255,255,255,0.9)',
-        border: '0.5px solid rgba(255,255,255,0.6)',
+        boxShadow: 'var(--lg-card-shadow)',
+        border: '0.5px solid var(--lg-card-border)',
       }}
     >
       {qty > 0 && (
         <span
           className="absolute top-2 right-2 text-white text-[11px] font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center leading-none"
-          style={{
-            backgroundColor: 'var(--cat-color, #007aff)',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-          }}
+          style={{ backgroundColor: 'var(--cat-color, #007aff)', boxShadow: '0 1px 4px rgba(0,0,0,0.25)' }}
         >
           {qty}
         </span>
@@ -47,7 +44,6 @@ export function ProductButton({ product }: Props) {
           backgroundColor: product.isSoldOut
             ? 'rgba(156,163,175,0.15)'
             : `color-mix(in srgb, var(--cat-color, #007aff) 18%, transparent)`,
-          boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.6)',
         }}
       >
         {product.icon}
@@ -66,7 +62,8 @@ export function ProductButton({ product }: Props) {
       </div>
 
       {product.isSoldOut && (
-        <span className="absolute inset-0 flex items-center justify-center rounded-[22px] bg-white/50 text-[12px] font-bold text-[#3c3c43]">
+        <span className="absolute inset-0 flex items-center justify-center rounded-[22px] text-[12px] font-bold text-[#3c3c43] dark:text-white/60"
+          style={{ background: 'var(--lg-card-bg)' }}>
           Ausverkauft
         </span>
       )}

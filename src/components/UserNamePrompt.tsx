@@ -39,11 +39,11 @@ export function UserNamePrompt({ onSave }: Props) {
         <div
           className="rounded-2xl overflow-hidden"
           style={{
-            background: 'rgba(255,255,255,0.75)',
+            background: 'var(--lg-card-bg)',
             backdropFilter: 'blur(40px) saturate(180%)',
             WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.08), inset 0 0.5px 0 rgba(255,255,255,0.9)',
-            border: '0.5px solid rgba(255,255,255,0.6)',
+            boxShadow: 'var(--lg-card-shadow)',
+            border: '0.5px solid var(--lg-card-border)',
           }}
         >
           <input

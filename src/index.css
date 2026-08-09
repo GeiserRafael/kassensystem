@@ -33,19 +33,51 @@ body {
   display: none;
 }
 
-/* Dark mode Liquid Glass overrides */
-.dark .lg-card {
-  background: rgba(28,28,30,0.72) !important;
-  border-color: rgba(255,255,255,0.08) !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.08) !important;
+/* ── Liquid Glass CSS variables ─────────────────────────────── */
+:root {
+  --lg-card-bg:        rgba(255, 255, 255, 0.72);
+  --lg-card-border:    rgba(255, 255, 255, 0.60);
+  --lg-card-shadow:    0 2px 12px rgba(0,0,0,0.06), inset 0 0.5px 0 rgba(255,255,255,0.90);
+
+  --lg-panel-bg:       rgba(255, 255, 255, 0.80);
+  --lg-panel-border:   rgba(60, 60, 67, 0.12);
+
+  --lg-bar-bg:         rgba(242, 242, 247, 0.80);
+  --lg-bar-border:     rgba(60, 60, 67, 0.15);
+
+  --lg-pill-bg:        rgba(255, 255, 255, 0.65);
+  --lg-pill-active-bg: rgba(28, 28, 30, 0.88);
+  --lg-pill-shadow:    0 1px 3px rgba(0,0,0,0.07), inset 0 0.5px 0 rgba(255,255,255,0.80);
+
+  --lg-input-bg:       rgba(120, 120, 128, 0.12);
+  --lg-btn-bg:         rgba(120, 120, 128, 0.12);
+  --lg-btn-primary-bg: rgba(0, 122, 255, 0.10);
+  --lg-btn-danger-bg:  rgba(255, 59, 48, 0.10);
+
+  --lg-divider:        rgba(60, 60, 67, 0.08);
+  --lg-status-bg:      rgba(242, 242, 247, 0.75);
 }
 
-.dark .lg-panel {
-  background: rgba(28,28,30,0.85) !important;
-  border-top-color: rgba(255,255,255,0.08) !important;
-}
+.dark {
+  --lg-card-bg:        rgba(30, 30, 32, 0.75);
+  --lg-card-border:    rgba(255, 255, 255, 0.08);
+  --lg-card-shadow:    0 2px 16px rgba(0,0,0,0.40), inset 0 0.5px 0 rgba(255,255,255,0.07);
 
-.dark .lg-bar {
-  background: rgba(28,28,30,0.8) !important;
-  border-color: rgba(255,255,255,0.08) !important;
+  --lg-panel-bg:       rgba(20, 20, 22, 0.88);
+  --lg-panel-border:   rgba(255, 255, 255, 0.08);
+
+  --lg-bar-bg:         rgba(20, 20, 22, 0.85);
+  --lg-bar-border:     rgba(255, 255, 255, 0.08);
+
+  --lg-pill-bg:        rgba(255, 255, 255, 0.10);
+  --lg-pill-active-bg: rgba(255, 255, 255, 0.92);
+  --lg-pill-shadow:    0 1px 3px rgba(0,0,0,0.30), inset 0 0.5px 0 rgba(255,255,255,0.12);
+
+  --lg-input-bg:       rgba(255, 255, 255, 0.08);
+  --lg-btn-bg:         rgba(255, 255, 255, 0.08);
+  --lg-btn-primary-bg: rgba(10, 132, 255, 0.15);
+  --lg-btn-danger-bg:  rgba(255, 69, 58, 0.15);
+
+  --lg-divider:        rgba(255, 255, 255, 0.07);
+  --lg-status-bg:      rgba(20, 20, 22, 0.80);
 }

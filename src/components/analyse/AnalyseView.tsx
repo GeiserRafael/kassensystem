@@ -2,14 +2,6 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/db'
 import { formatCent } from '../../utils'
 
-const liquidCard = {
-  background: 'rgba(255,255,255,0.72)',
-  backdropFilter: 'blur(20px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  boxShadow: '0 2px 12px rgba(0,0,0,0.06), inset 0 0.5px 0 rgba(255,255,255,0.9)',
-  border: '0.5px solid rgba(255,255,255,0.55)',
-}
-
 export function AnalyseView() {
   const sales = useLiveQuery(() =>
     db.sales.where('type').equals('sale').toArray()
@@ -43,11 +35,7 @@ export function AnalyseView() {
     for (const item of sale.lineItems) {
       const key = item.name
       const cur = byProduct.get(key) ?? { icon: item.icon, count: 0, revenue: 0 }
-      byProduct.set(key, {
-        icon: item.icon,
-        count: cur.count + item.qty,
-        revenue: cur.revenue + item.lineTotal,
-      })
+      byProduct.set(key, { icon: item.icon, count: cur.count + item.qty, revenue: cur.revenue + item.lineTotal })
     }
   }
   const productRows = [...byProduct.entries()].sort((a, b) => b[1].revenue - a[1].revenue)
@@ -56,7 +44,7 @@ export function AnalyseView() {
     <div className="h-full overflow-y-auto bg-[#f2f2f7] dark:bg-black">
       <div className="pb-8">
 
-        {/* Hero metric card — Liquid Glass Green */}
+        {/* Hero card */}
         <div
           className="mx-4 mt-5 rounded-3xl p-6"
           style={{
@@ -69,21 +57,27 @@ export function AnalyseView() {
           <div className="text-white/60 text-[13px] mt-2">{sales.length} {sales.length === 1 ? 'Verkauf' : 'Verkäufe'}</div>
         </div>
 
-        {/* Per user */}
+        {/* Mitarbeiter */}
         <div className="px-4 pt-6 pb-1">
           <span className="text-[12px] font-semibold text-[#3c3c43]/55 dark:text-white/35 uppercase tracking-widest">Mitarbeiter</span>
         </div>
-        <div className="mx-4 rounded-3xl overflow-hidden" style={liquidCard}>
+        <div
+          className="mx-4 rounded-3xl overflow-hidden"
+          style={{
+            background: 'var(--lg-card-bg)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: 'var(--lg-card-shadow)',
+            border: '0.5px solid var(--lg-card-border)',
+          }}
+        >
           {userRows.map(([name, stats], i) => (
             <div key={name}>
-              {i > 0 && <div className="h-px bg-[#3c3c43]/8 ml-[60px]" />}
+              {i > 0 && <div className="h-px ml-[60px]" style={{ background: 'var(--lg-divider)' }} />}
               <div className="px-4 py-3.5 flex items-center gap-3">
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[15px] shrink-0"
-                  style={{
-                    background: 'rgba(0,122,255,0.12)',
-                    color: '#007aff',
-                  }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[15px] shrink-0 text-[#007aff] dark:text-[#0a84ff]"
+                  style={{ background: 'var(--lg-btn-primary-bg)' }}
                 >
                   {name.charAt(0).toUpperCase()}
                 </div>
@@ -97,14 +91,23 @@ export function AnalyseView() {
           ))}
         </div>
 
-        {/* Per product */}
+        {/* Produkte */}
         <div className="px-4 pt-6 pb-1">
           <span className="text-[12px] font-semibold text-[#3c3c43]/55 dark:text-white/35 uppercase tracking-widest">Produkte</span>
         </div>
-        <div className="mx-4 rounded-3xl overflow-hidden" style={liquidCard}>
+        <div
+          className="mx-4 rounded-3xl overflow-hidden"
+          style={{
+            background: 'var(--lg-card-bg)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: 'var(--lg-card-shadow)',
+            border: '0.5px solid var(--lg-card-border)',
+          }}
+        >
           {productRows.map(([name, stats], i) => (
             <div key={name}>
-              {i > 0 && <div className="h-px bg-[#3c3c43]/8 ml-[60px]" />}
+              {i > 0 && <div className="h-px ml-[60px]" style={{ background: 'var(--lg-divider)' }} />}
               <div className="px-4 py-3.5 flex items-center gap-3">
                 <span className="text-[28px] w-9 text-center shrink-0">{stats.icon}</span>
                 <div className="flex-1 min-w-0">

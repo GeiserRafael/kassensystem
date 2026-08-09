@@ -85,19 +85,15 @@ export default function App() {
             paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
-          {/* Status bar — Liquid Glass */}
+          {/* Status bar */}
           <div
             className={`flex items-center justify-between px-4 py-2 text-[11px] font-medium shrink-0 ${
-              online
-                ? 'text-[#3c3c43]/70 dark:text-white/50'
-                : 'text-yellow-700 dark:text-yellow-400'
+              online ? 'text-[#3c3c43]/70 dark:text-white/50' : 'text-yellow-700 dark:text-yellow-400'
             }`}
             style={{
               backdropFilter: 'blur(40px) saturate(180%)',
               WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-              backgroundColor: online
-                ? 'rgba(242,242,247,0.7)'
-                : 'rgba(254,252,232,0.8)',
+              background: online ? 'var(--lg-status-bg)' : 'rgba(254,252,232,0.85)',
             }}
           >
             <div className="flex items-center gap-2">
@@ -125,14 +121,14 @@ export default function App() {
             {tab === 'analyse'  && <AnalyseView />}
           </main>
 
-          {/* Tab Bar — Liquid Glass */}
+          {/* Tab Bar */}
           <nav
             className="flex shrink-0"
             style={{
               backdropFilter: 'blur(40px) saturate(180%)',
               WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-              backgroundColor: 'rgba(242,242,247,0.75)',
-              borderTop: '0.5px solid rgba(60,60,67,0.15)',
+              background: 'var(--lg-bar-bg)',
+              borderTop: '0.5px solid var(--lg-bar-border)',
             }}
           >
             {tabs.map((t) => (
