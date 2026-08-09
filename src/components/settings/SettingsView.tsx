@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/db'
 import type { Category, Product } from '../../db/types'
 import { formatCent } from '../../utils'
-import { pushProductToFirestore, pushCategoryToFirestore, deleteCategoryFromFirestore, deleteAllSales } from '../../db/sync'
+import { pushProductToFirestore, pushCategoryToFirestore, deleteCategoryFromFirestore, deleteProductFromFirestore, deleteAllSales } from '../../db/sync'
 
 const CATEGORY_COLORS = ['#007aff', '#ff9500', '#34c759', '#af52de', '#ff3b30', '#ffcc00', '#5ac8fa', '#ff2d55']
 
@@ -240,6 +240,14 @@ export function SettingsView() {
                           }`}
                         >{p.isActive ? 'Aktiv' : 'Inaktiv'}</button>
                         <button onClick={() => setEditingProduct(p)} className="text-[#007aff] dark:text-[#0a84ff] px-1 text-[15px]">✏️</button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`"${p.name}" löschen?`)) return
+                            await db.products.delete(p.id!)
+                            deleteProductFromFirestore(p.id!).catch(console.error)
+                          }}
+                          className="text-[#ff3b30] dark:text-[#ff453a] px-1 text-[15px]"
+                        >🗑️</button>
                       </div>
                     </div>
                   </div>

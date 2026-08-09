@@ -89,6 +89,12 @@ export async function pushCategoryToFirestore(category: Category): Promise<void>
     .commit()
 }
 
+export async function deleteProductFromFirestore(id: number): Promise<void> {
+  if (!firestore) return
+  const { deleteDoc } = await import('firebase/firestore')
+  await deleteDoc(doc(firestore, 'products', String(id)))
+}
+
 export async function deleteCategoryFromFirestore(id: number): Promise<void> {
   if (!firestore) return
   const { deleteDoc } = await import('firebase/firestore')
