@@ -23,6 +23,65 @@ function SectionHeader({ title }: { title: string }) {
   )
 }
 
+interface ProductFormProps {
+  value: Partial<Product>
+  categories: Category[]
+  onChange: (p: Partial<Product>) => void
+  onSave: () => void
+  onCancel: () => void
+}
+
+function ProductForm({ value, categories, onChange, onSave, onCancel }: ProductFormProps) {
+  return (
+    <div className="p-4 space-y-3 bg-[#f2f2f7] dark:bg-black/30">
+      <div className="flex gap-2">
+        <input
+          value={value.icon ?? ''}
+          onChange={(e) => onChange({ ...value, icon: e.target.value })}
+          className="w-14 text-center text-2xl bg-white dark:bg-white/8 rounded-xl p-2.5 focus:outline-none"
+          placeholder="🛍️"
+        />
+        <input
+          value={value.name ?? ''}
+          onChange={(e) => onChange({ ...value, name: e.target.value })}
+          className="flex-1 bg-white dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007aff]"
+          placeholder="Name"
+        />
+      </div>
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <label className="text-[12px] text-[#3c3c43]/60 dark:text-white/40 font-medium">Preis (€)</label>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            value={value.price ? (value.price / 100).toFixed(2) : ''}
+            onChange={(e) => onChange({ ...value, price: Math.round(parseFloat(e.target.value) * 100) || 0 })}
+            className="w-full mt-1 bg-white dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007aff]"
+            placeholder="0,00"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-[12px] text-[#3c3c43]/60 dark:text-white/40 font-medium">Kategorie</label>
+          <select
+            value={value.categoryId ?? ''}
+            onChange={(e) => onChange({ ...value, categoryId: Number(e.target.value) })}
+            className="w-full mt-1 bg-white dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-[15px] focus:outline-none"
+          >
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="flex gap-2 pt-1">
+        <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl bg-white dark:bg-white/8 text-[#3c3c43] dark:text-white font-semibold text-[15px] active:opacity-60">Abbrechen</button>
+        <button onClick={onSave} className="flex-1 py-2.5 rounded-xl bg-[#007aff] dark:bg-[#0a84ff] text-white font-semibold text-[15px] active:opacity-80">Speichern</button>
+      </div>
+    </div>
+  )
+}
+
 export function SettingsView() {
   const [tab, setTab] = useState<'products' | 'categories' | 'tabs' | 'user' | 'admin'>('products')
   const [userName, setUserName] = useState(localStorage.getItem('userName') ?? '')
@@ -34,11 +93,11 @@ export function SettingsView() {
   const categories = useLiveQuery(() => db.categories.orderBy('sortOrder').toArray())
   const products = useLiveQuery(() => db.products.orderBy('sortOrder').toArray())
 
+  // editingProduct ohne id = neues Produkt (Formular oben); mit id = inline unter der Zeile
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null)
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null)
   const [editingTab, setEditingTab] = useState<Partial<Tab> | null>(null)
 
-  // Produkt-Reihenfolge: tauscht die sortOrder-Werte zweier benachbarter Produkte
   async function moveProduct(p: Product, dir: -1 | 1) {
     const list = (products ?? [])
       .filter((x) => x.categoryId === p.categoryId)
@@ -47,7 +106,6 @@ export function SettingsView() {
     const swapIdx = idx + dir
     if (idx === -1 || swapIdx < 0 || swapIdx >= list.length) return
     const now = Date.now()
-    // Normalisiere zuerst alle sortOrders der Kategorie auf 0,1,2,... dann tausche
     const normalized = list.map((item, i) => ({ ...item, sortOrder: i, lastModified: now }))
     normalized[idx].sortOrder = swapIdx
     normalized[swapIdx].sortOrder = idx
@@ -55,7 +113,6 @@ export function SettingsView() {
     normalized.forEach((item) => pushProductToFirestore(item).catch(console.error))
   }
 
-  // Kategorie-Reihenfolge innerhalb eines Tabs
   async function moveCategory(c: Category, dir: -1 | 1) {
     const list = (categories ?? [])
       .filter((x) => x.tabId === c.tabId)
@@ -71,7 +128,6 @@ export function SettingsView() {
     normalized.forEach((item) => pushCategoryToFirestore(item).catch(console.error))
   }
 
-  // Tab-Reihenfolge
   async function moveTab(t: Tab, dir: -1 | 1) {
     const list = (appTabs ?? []).sort((a, b) => a.sortOrder - b.sortOrder)
     const idx = list.findIndex((x) => x.id === t.id)
@@ -231,6 +287,8 @@ export function SettingsView() {
         {tab === 'products' && (
           <>
             <SectionHeader title="Produkte" />
+
+            {/* Neues Produkt Button + Formular (oben, nur für neue Produkte) */}
             <div className="mx-4 rounded-2xl overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-sm">
               <button
                 onClick={newProduct}
@@ -241,57 +299,23 @@ export function SettingsView() {
               </button>
             </div>
 
-            {editingProduct && (
-              <div className="mx-4 mt-3 rounded-2xl bg-white dark:bg-[#1c1c1e] shadow-sm p-4 space-y-3">
-                <h3 className="font-bold text-[17px] text-[#1c1c1e] dark:text-white">{editingProduct.id ? 'Produkt bearbeiten' : 'Neues Produkt'}</h3>
-                <div className="flex gap-2">
-                  <input
-                    value={editingProduct.icon}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, icon: e.target.value })}
-                    className="w-14 text-center text-2xl bg-[#f2f2f7] dark:bg-white/8 rounded-xl p-2.5 focus:outline-none"
-                    placeholder="🛍️"
-                  />
-                  <input
-                    value={editingProduct.name}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                    className="flex-1 bg-[#f2f2f7] dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007aff]"
-                    placeholder="Name"
-                  />
+            {editingProduct && !editingProduct.id && (
+              <div className="mx-4 mt-2 rounded-2xl overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-sm">
+                <div className="px-4 pt-3 pb-1">
+                  <span className="text-[13px] font-semibold text-[#3c3c43]/60 dark:text-white/40 uppercase tracking-wide">Neues Produkt</span>
                 </div>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <label className="text-[12px] text-[#3c3c43]/60 dark:text-white/40 font-medium">Preis (€)</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      value={editingProduct.price ? (editingProduct.price / 100).toFixed(2) : ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, price: Math.round(parseFloat(e.target.value) * 100) || 0 })}
-                      className="w-full mt-1 bg-[#f2f2f7] dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007aff]"
-                      placeholder="0,00"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[12px] text-[#3c3c43]/60 dark:text-white/40 font-medium">Kategorie</label>
-                    <select
-                      value={editingProduct.categoryId}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, categoryId: Number(e.target.value) })}
-                      className="w-full mt-1 bg-[#f2f2f7] dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-[15px] focus:outline-none"
-                    >
-                      {(categories ?? []).map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <button onClick={() => setEditingProduct(null)} className="flex-1 py-2.5 rounded-xl bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43] dark:text-white font-semibold text-[15px] active:opacity-60">Abbrechen</button>
-                  <button onClick={saveProduct} className="flex-1 py-2.5 rounded-xl bg-[#007aff] dark:bg-[#0a84ff] text-white font-semibold text-[15px] active:opacity-80">Speichern</button>
-                </div>
+                <ProductForm
+                  value={editingProduct}
+                  categories={categories ?? []}
+                  onChange={setEditingProduct}
+                  onSave={saveProduct}
+                  onCancel={() => setEditingProduct(null)}
+                />
               </div>
             )}
 
-            {(products ?? []).length > 0 && (categories ?? []).map((cat) => {
+            {/* Produkte gruppiert nach Kategorie */}
+            {(categories ?? []).map((cat) => {
               const catProds = (products ?? [])
                 .filter((p) => p.categoryId === cat.id)
                 .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -304,9 +328,10 @@ export function SettingsView() {
                   </div>
                   {catProds.map((p, i) => (
                     <div key={p.id}>
-                      {i > 0 && <div className="h-px bg-[#3c3c43]/10 dark:bg-white/8 ml-4" />}
+                      {i > 0 && !editingProduct?.id && <div className="h-px bg-[#3c3c43]/10 dark:bg-white/8 ml-4" />}
+
+                      {/* Produktzeile */}
                       <div className={`px-3 py-2.5 flex items-center gap-2 ${!p.isActive ? 'opacity-45' : ''}`}>
-                        {/* Sort buttons */}
                         <div className="flex flex-col gap-0.5 shrink-0">
                           <button
                             onClick={() => moveProduct(p, -1)}
@@ -342,7 +367,10 @@ export function SettingsView() {
                                 : 'bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43]/50 dark:text-white/30'
                             }`}
                           >{p.isActive ? 'Aktiv' : 'Inaktiv'}</button>
-                          <button onClick={() => setEditingProduct(p)} className="text-[#007aff] dark:text-[#0a84ff] px-1 text-[14px]">✏️</button>
+                          <button
+                            onClick={() => setEditingProduct(editingProduct?.id === p.id ? null : p)}
+                            className={`px-1 text-[14px] ${editingProduct?.id === p.id ? 'opacity-60' : ''}`}
+                          >✏️</button>
                           <button
                             onClick={async () => {
                               if (!confirm(`"${p.name}" löschen?`)) return
@@ -353,11 +381,23 @@ export function SettingsView() {
                           >🗑️</button>
                         </div>
                       </div>
+
+                      {/* Inline-Bearbeitungsformular direkt unter der Zeile */}
+                      {editingProduct?.id === p.id && (
+                        <ProductForm
+                          value={editingProduct!}
+                          categories={categories ?? []}
+                          onChange={setEditingProduct}
+                          onSave={saveProduct}
+                          onCancel={() => setEditingProduct(null)}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
               )
             })}
+            <div className="h-6" />
           </>
         )}
 
@@ -420,7 +460,6 @@ export function SettingsView() {
               </div>
             )}
 
-            {/* Kategorien gruppiert nach Tab */}
             {(appTabs ?? []).map((appTab) => {
               const tabCats = (categories ?? [])
                 .filter((c) => c.tabId === appTab.id)
@@ -458,7 +497,6 @@ export function SettingsView() {
               )
             })}
 
-            {/* Kategorien ohne Tab */}
             {(() => {
               const noTabCats = (categories ?? []).filter((c) => !c.tabId)
               if (noTabCats.length === 0) return null
@@ -481,6 +519,7 @@ export function SettingsView() {
                 </div>
               )
             })()}
+            <div className="h-6" />
           </>
         )}
 
