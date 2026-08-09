@@ -17,7 +17,7 @@ export default function App() {
   const [lastSync, setLastSync] = useState<string | null>(getLastSyncedAt())
   const [fbStatus, setFbStatus] = useState<FirebaseStatus>('unknown')
   const [userName, setUserName] = useState<string>(localStorage.getItem('userName') ?? '')
-  const { dark, toggle: toggleDark } = useDarkMode()
+  const { dark, toggle: toggleDark, resetToSystem } = useDarkMode()
 
   async function doSync() {
     if (!navigator.onLine || syncing) return
@@ -105,6 +105,9 @@ export default function App() {
                 <button onClick={doSync} className="text-[#007aff] dark:text-[#0a84ff] font-semibold">Sync</button>
               )}
               <button onClick={toggleDark} className="text-sm">{dark ? '☀️' : '🌙'}</button>
+              {localStorage.getItem('darkMode') !== null && (
+                <button onClick={resetToSystem} className="text-[10px] text-[#3c3c43]/50 dark:text-white/30 font-medium">Auto</button>
+              )}
             </div>
           </div>
 
