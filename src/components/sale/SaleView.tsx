@@ -203,7 +203,7 @@ export function SaleView() {
                 className="flex-1 py-2 rounded-2xl text-[#1c1c1e] dark:text-white text-[13px] font-semibold active:scale-95 transition-transform"
                 style={{ background: 'var(--lg-btn-bg)' }}
               >
-                +{formatCent(amt).replace(' €', '€')}
+                +{formatCent(amt).replace(',00 €', '€').replace(' €', '€')}
               </button>
             ))}
             <button
