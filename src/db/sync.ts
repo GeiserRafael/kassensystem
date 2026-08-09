@@ -159,7 +159,7 @@ export async function deleteAllSales(): Promise<void> {
   if (!firestore) return
 
   // Firestore: alle Docs in 'sales' in Batches löschen
-  const { getDocs, deleteDoc } = await import('firebase/firestore')
+  const { getDocs } = await import('firebase/firestore')
   const snap = await getDocs(collection(firestore, 'sales'))
   const BATCH_SIZE = 400
   for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
