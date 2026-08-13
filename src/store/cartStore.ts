@@ -52,8 +52,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
     })
   },
 
-  addPfand: () => set((state) => ({ pfandQty: state.pfandQty + 1, pfandAdded: state.pfandAdded + 1 })),
-  removePfand: () => set((state) => ({ pfandQty: Math.max(0, state.pfandQty - 1) })),
+  addPfand: () => set((state) => ({ pfandQty: Math.min(state.pfandAdded, state.pfandQty + 1) })),
+  removePfand: () => set((state) => ({ pfandQty: state.pfandQty - 1 })),
 
   removeOne: (productId) => {
     set((state) => {

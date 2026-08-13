@@ -171,7 +171,7 @@ export function SaleView() {
                 <span className="text-[14px] font-medium w-16 text-right text-[#3c3c43] dark:text-white/70">{formatCent(item.lineTotal)}</span>
               </div>
             ))}
-            {pfandQty > 0 && (
+            {pfandAdded > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-xl">🪙</span>
                 <span className="flex-1 text-[15px] truncate text-[#1c1c1e] dark:text-white">Pfand</span>
