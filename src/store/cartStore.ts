@@ -6,7 +6,8 @@ interface CartItem extends LineItem {}
 
 interface CartStore {
   items: CartItem[]
-  pfandQty: number
+  pfandQty: number    // net (after returns)
+  pfandAdded: number  // total added (denominator for display)
   addProduct: (product: Product) => void
   addPfand: () => void
   removePfand: () => void
@@ -19,6 +20,7 @@ interface CartStore {
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   pfandQty: 0,
+  pfandAdded: 0,
 
   addProduct: (product) => {
     const id = product.id!
@@ -45,11 +47,12 @@ export const useCartStore = create<CartStore>((set, get) => ({
       return {
         items: newItems,
         pfandQty: product.hasPfand ? state.pfandQty + 1 : state.pfandQty,
+        pfandAdded: product.hasPfand ? state.pfandAdded + 1 : state.pfandAdded,
       }
     })
   },
 
-  addPfand: () => set((state) => ({ pfandQty: state.pfandQty + 1 })),
+  addPfand: () => set((state) => ({ pfandQty: state.pfandQty + 1, pfandAdded: state.pfandAdded + 1 })),
   removePfand: () => set((state) => ({ pfandQty: Math.max(0, state.pfandQty - 1) })),
 
   removeOne: (productId) => {
@@ -86,7 +89,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     })
   },
 
-  clear: () => set({ items: [], pfandQty: 0 }),
+  clear: () => set({ items: [], pfandQty: 0, pfandAdded: 0 }),
 
   total: () => {
     const { items, pfandQty } = get()

@@ -18,6 +18,7 @@ export function SaleView() {
 
   const items = useCartStore((s) => s.items)
   const pfandQty = useCartStore((s) => s.pfandQty)
+  const pfandAdded = useCartStore((s) => s.pfandAdded)
   const addProduct = useCartStore((s) => s.addProduct)
   const addPfand = useCartStore((s) => s.addPfand)
   const removePfand = useCartStore((s) => s.removePfand)
@@ -180,7 +181,7 @@ export function SaleView() {
                     className="w-7 h-7 rounded-full text-[#ff3b30] dark:text-[#ff453a] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
                     style={{ background: 'var(--lg-btn-danger-bg)' }}
                   >−</button>
-                  <span className="w-5 text-center text-[15px] font-semibold text-[#1c1c1e] dark:text-white">{pfandQty}</span>
+                  <span className="w-12 text-center text-[15px] font-semibold text-[#1c1c1e] dark:text-white tabular-nums">{pfandQty}/{pfandAdded}</span>
                   <button
                     onClick={addPfand}
                     className="w-7 h-7 rounded-full text-[#34c759] dark:text-[#30d158] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
