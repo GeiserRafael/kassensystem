@@ -59,8 +59,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set((state) => {
       const existing = state.items.find((i) => i.productId === productId)
       if (!existing) return state
+      const hasPfand = existing.hasPfand ?? false
+      const newPfandAdded = hasPfand ? state.pfandAdded - 1 : state.pfandAdded
+      const newPfandQty = hasPfand ? Math.min(state.pfandQty, newPfandAdded) : state.pfandQty
       if (existing.qty === 1) {
-        return { items: state.items.filter((i) => i.productId !== productId) }
+        return { items: state.items.filter((i) => i.productId !== productId), pfandAdded: newPfandAdded, pfandQty: newPfandQty }
       }
       return {
         items: state.items.map((i) =>
@@ -68,6 +71,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
             ? { ...i, qty: i.qty - 1, lineTotal: (i.qty - 1) * i.unitPrice }
             : i
         ),
+        pfandAdded: newPfandAdded,
+        pfandQty: newPfandQty,
       }
     })
   },
@@ -76,8 +81,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set((state) => {
       if (state.items.length === 0) return state
       const last = state.items[state.items.length - 1]
+      const hasPfand = last.hasPfand ?? false
+      const newPfandAdded = hasPfand ? state.pfandAdded - 1 : state.pfandAdded
+      const newPfandQty = hasPfand ? Math.min(state.pfandQty, newPfandAdded) : state.pfandQty
       if (last.qty === 1) {
-        return { items: state.items.slice(0, -1) }
+        return { items: state.items.slice(0, -1), pfandAdded: newPfandAdded, pfandQty: newPfandQty }
       }
       return {
         items: state.items.map((item, idx) =>
@@ -85,6 +93,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
             ? { ...item, qty: item.qty - 1, lineTotal: (item.qty - 1) * item.unitPrice }
             : item
         ),
+        pfandAdded: newPfandAdded,
+        pfandQty: newPfandQty,
       }
     })
   },
