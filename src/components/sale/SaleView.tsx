@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/db'
 import { useCartStore } from '../../store/cartStore'
-import { formatCent, generateId, getDeviceId, getUserName } from '../../utils'
+import { formatCent, generateId, getDeviceId, getUserName, getPfandPrice } from '../../utils'
 import { ProductButton } from './ProductButton'
 import { syncSalesToFirestore } from '../../db/sync'
 import type { Category } from '../../db/types'
@@ -17,7 +17,10 @@ export function SaleView() {
   const [activeTabId, setActiveTabId] = useState<number | null>(null)
 
   const items = useCartStore((s) => s.items)
+  const pfandQty = useCartStore((s) => s.pfandQty)
   const addProduct = useCartStore((s) => s.addProduct)
+  const addPfand = useCartStore((s) => s.addPfand)
+  const removePfand = useCartStore((s) => s.removePfand)
   const removeOne = useCartStore((s) => s.removeOne)
   const removeLastAdded = useCartStore((s) => s.removeLastAdded)
   const clear = useCartStore((s) => s.clear)
@@ -56,6 +59,7 @@ export function SaleView() {
 
   async function handlePay() {
     if (items.length === 0) return
+    const pfandTotal = pfandQty * getPfandPrice()
     await db.sales.add({
       id: generateId(),
       userId: getUserName(),
@@ -63,6 +67,8 @@ export function SaleView() {
       createdAt: Date.now(),
       type: 'sale',
       lineItems: items,
+      pfandQty,
+      pfandTotal,
       total,
       given: givenCent,
       change: Math.max(0, change),
@@ -156,7 +162,7 @@ export function SaleView() {
                   >−</button>
                   <span className="w-5 text-center text-[15px] font-semibold text-[#1c1c1e] dark:text-white">{item.qty}</span>
                   <button
-                    onClick={() => addProduct({ id: item.productId, name: item.name, icon: item.icon, price: item.unitPrice, categoryId: 0, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0, lastModified: 0 })}
+                    onClick={() => addProduct({ id: item.productId, name: item.name, icon: item.icon, price: item.unitPrice, hasPfand: item.hasPfand, categoryId: 0, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0, lastModified: 0 })}
                     className="w-7 h-7 rounded-full text-[#34c759] dark:text-[#30d158] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
                     style={{ background: 'rgba(52,199,89,0.12)' }}
                   >+</button>
@@ -164,6 +170,26 @@ export function SaleView() {
                 <span className="text-[14px] font-medium w-16 text-right text-[#3c3c43] dark:text-white/70">{formatCent(item.lineTotal)}</span>
               </div>
             ))}
+            {pfandQty > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🪙</span>
+                <span className="flex-1 text-[15px] truncate text-[#1c1c1e] dark:text-white">Pfand</span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={removePfand}
+                    className="w-7 h-7 rounded-full text-[#ff3b30] dark:text-[#ff453a] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+                    style={{ background: 'var(--lg-btn-danger-bg)' }}
+                  >−</button>
+                  <span className="w-5 text-center text-[15px] font-semibold text-[#1c1c1e] dark:text-white">{pfandQty}</span>
+                  <button
+                    onClick={addPfand}
+                    className="w-7 h-7 rounded-full text-[#34c759] dark:text-[#30d158] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+                    style={{ background: 'rgba(52,199,89,0.12)' }}
+                  >+</button>
+                </div>
+                <span className="text-[14px] font-medium w-16 text-right text-[#3c3c43] dark:text-white/70">{formatCent(pfandQty * getPfandPrice())}</span>
+              </div>
+            )}
           </div>
         )}
 

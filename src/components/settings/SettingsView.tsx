@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/db'
 import type { Category, Product, Tab } from '../../db/types'
-import { formatCent } from '../../utils'
+import { formatCent, getPfandPrice, setPfandPrice, PFAND_PRICE_DEFAULT } from '../../utils'
 import {
   pushProductToFirestore,
   pushCategoryToFirestore,
@@ -74,6 +74,16 @@ function ProductForm({ value, categories, onChange, onSave, onCancel }: ProductF
           </select>
         </div>
       </div>
+      <div className="flex items-center justify-between px-1 pt-1">
+        <span className="text-[15px] text-[#1c1c1e] dark:text-white">🪙 Pfand</span>
+        <button
+          type="button"
+          onClick={() => onChange({ ...value, hasPfand: !value.hasPfand })}
+          className={`relative w-12 h-7 rounded-full transition-colors ${value.hasPfand ? 'bg-[#34c759]' : 'bg-[#e5e5ea] dark:bg-white/15'}`}
+        >
+          <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-all ${value.hasPfand ? 'left-[22px]' : 'left-0.5'}`} />
+        </button>
+      </div>
       <div className="flex gap-2 pt-1">
         <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl bg-white dark:bg-white/8 text-[#3c3c43] dark:text-white font-semibold text-[15px] active:opacity-60">Abbrechen</button>
         <button onClick={onSave} className="flex-1 py-2.5 rounded-xl bg-[#007aff] dark:bg-[#0a84ff] text-white font-semibold text-[15px] active:opacity-80">Speichern</button>
@@ -88,6 +98,9 @@ export function SettingsView() {
   const [adminUnlocked, setAdminUnlocked] = useState(false)
   const [adminPw, setAdminPw] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [pfandPrice, setPfandPriceState] = useState(getPfandPrice())
+  const [editingPfandPrice, setEditingPfandPrice] = useState(false)
+  const [pfandPriceInput, setPfandPriceInput] = useState('')
 
   const appTabs = useLiveQuery(() => db.tabs.orderBy('sortOrder').toArray())
   const categories = useLiveQuery(() => db.categories.orderBy('sortOrder').toArray())
@@ -141,8 +154,21 @@ export function SettingsView() {
     normalized.forEach((item) => pushTabToFirestore(item).catch(console.error))
   }
 
+  async function toggleHasPfand(p: Product) {
+    const updated = { ...p, hasPfand: !p.hasPfand, lastModified: Date.now() }
+    await db.products.update(p.id!, updated)
+    pushProductToFirestore(updated).catch(console.error)
+  }
+
+  function savePfandPrice() {
+    const cents = Math.round(parseFloat(pfandPriceInput.replace(',', '.')) * 100) || PFAND_PRICE_DEFAULT
+    setPfandPrice(cents)
+    setPfandPriceState(cents)
+    setEditingPfandPrice(false)
+  }
+
   function newProduct() {
-    setEditingProduct({ name: '', icon: '🛍️', price: 0, categoryId: categories?.[0]?.id ?? 0, isActive: true, isSoldOut: false, isFavorite: false, sortOrder: 0 })
+    setEditingProduct({ name: '', icon: '🛍️', price: 0, categoryId: categories?.[0]?.id ?? 0, isActive: true, isSoldOut: false, isFavorite: false, hasPfand: false, sortOrder: 0 })
   }
 
   async function saveProduct() {
@@ -314,6 +340,41 @@ export function SettingsView() {
               </div>
             )}
 
+            {/* Pfand-Einstellungen */}
+            <div className="mx-4 mt-3 rounded-2xl overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-sm">
+              <div className="px-4 py-2 flex items-center gap-2 border-b border-[#3c3c43]/8 dark:border-white/6">
+                <span className="text-[12px] font-semibold text-[#3c3c43]/60 dark:text-white/40 uppercase tracking-wide">Pfand</span>
+              </div>
+              <div className="px-4 py-3.5 flex items-center gap-3">
+                <span className="text-xl shrink-0">🪙</span>
+                <span className="flex-1 text-[17px] font-medium text-[#1c1c1e] dark:text-white">Pfand-Preis</span>
+                {editingPfandPrice ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      autoFocus
+                      value={pfandPriceInput}
+                      onChange={(e) => setPfandPriceInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') savePfandPrice() }}
+                      className="w-20 bg-[#f2f2f7] dark:bg-white/8 text-[#1c1c1e] dark:text-white rounded-xl px-3 py-1.5 text-[15px] text-right focus:outline-none focus:ring-2 focus:ring-[#007aff]"
+                    />
+                    <button onClick={savePfandPrice} className="py-1.5 px-3 rounded-xl bg-[#007aff] dark:bg-[#0a84ff] text-white text-[13px] font-semibold active:opacity-80">OK</button>
+                    <button onClick={() => setEditingPfandPrice(false)} className="py-1.5 px-2 rounded-xl bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43] dark:text-white text-[13px] font-semibold active:opacity-60">✕</button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-[17px] font-semibold text-[#1c1c1e] dark:text-white">{formatCent(pfandPrice)}</span>
+                    <button
+                      onClick={() => { setPfandPriceInput((pfandPrice / 100).toFixed(2)); setEditingPfandPrice(true) }}
+                      className="text-[14px] px-1"
+                    >✏️</button>
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Produkte gruppiert nach Kategorie */}
             {(categories ?? []).map((cat) => {
               const catProds = (products ?? [])
@@ -351,6 +412,14 @@ export function SettingsView() {
                         </div>
                         <div className="flex gap-1 items-center">
                           <button onClick={() => toggleFavorite(p)} className={`text-base transition-opacity ${p.isFavorite ? 'opacity-100' : 'opacity-20'}`}>⭐</button>
+                          <button
+                            onClick={() => toggleHasPfand(p)}
+                            className={`text-[11px] px-2 py-1 rounded-lg font-semibold ${
+                              p.hasPfand
+                                ? 'bg-[#ff9500]/15 text-[#ff9500] dark:bg-[#ff9f0a]/20 dark:text-[#ff9f0a]'
+                                : 'bg-[#f2f2f7] dark:bg-white/8 text-[#3c3c43]/40 dark:text-white/25'
+                            }`}
+                          >🪙</button>
                           <button
                             onClick={() => toggleSoldOut(p)}
                             className={`text-[11px] px-2 py-1 rounded-lg font-semibold ${

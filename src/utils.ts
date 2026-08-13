@@ -18,3 +18,15 @@ export function getDeviceId(): string {
 export function getUserName(): string {
   return localStorage.getItem('userName') ?? 'Unbekannt'
 }
+
+const PFAND_PRICE_KEY = 'pfandPrice'
+export const PFAND_PRICE_DEFAULT = 200  // 2 € in Cent
+
+export function getPfandPrice(): number {
+  const stored = localStorage.getItem(PFAND_PRICE_KEY)
+  return stored ? parseInt(stored, 10) : PFAND_PRICE_DEFAULT
+}
+
+export function setPfandPrice(cent: number): void {
+  localStorage.setItem(PFAND_PRICE_KEY, String(cent))
+}

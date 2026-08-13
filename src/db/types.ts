@@ -24,6 +24,7 @@ export interface Product {
   isActive: boolean
   isSoldOut: boolean
   isFavorite: boolean
+  hasPfand?: boolean
   sortOrder: number
   lastModified: number
 }
@@ -35,6 +36,7 @@ export interface LineItem {
   qty: number
   unitPrice: number    // in Cent
   lineTotal: number    // in Cent
+  hasPfand?: boolean
 }
 
 export interface Sale {
@@ -47,6 +49,8 @@ export interface Sale {
   total: number        // in Cent
   given: number        // in Cent
   change: number       // in Cent
+  pfandQty?: number
+  pfandTotal?: number  // in Cent
   synced?: boolean
 }
 
